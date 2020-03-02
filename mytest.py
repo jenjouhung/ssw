@@ -51,6 +51,10 @@ aligner = Aligner(matrix=mUTSM)
 
 num_turns=0
 
+#輸出訊息用
+outputMessage=[]
+
+
 #比較句長於MIN_COMP_LENGTH，放入比較範圍Queue
 if (len(refString)>=min_comp_length and len(qryString)>=min_comp_length):
 	compareTaskQueue=[(0,len(refString),0,len(qryString))]
@@ -64,8 +68,11 @@ while(len(compareTaskQueue)>0):
 	#找出本次比較字串
 	crString=refString[crBegin:crEnd]
 	cqString=qryString[cqBegin:cqEnd]
-	print("========   My Report #{}  ========== ".format(num_turns))
-	print(" 比對對象：Ref[{}:{}] ::  Query[{}:{}] ".format(crBegin,crEnd,cqBegin,cqEnd))
+	
+	outputMessage.append("========   My Report #{}  ========== ".format(num_turns))
+	#print(outputMessage[-1])
+	outputMessage.append(" 比對對象：Ref[{}:{}] ::  Query[{}:{}] ".format(crBegin,crEnd,cqBegin,cqEnd))
+	#print(outputMessage[-1])
 
 	"""
 	print("------------- 本次 Ref ------------ ")
@@ -87,26 +94,32 @@ while(len(compareTaskQueue)>0):
 	arBegin=alignment.reference_begin+crBegin
 	arEnd=alignment.reference_end+crBegin
 
-	print(" 比對結果： ")
-	print(" "*4+"Ref [{}:{}] {}".format(arBegin,arEnd,refString[arBegin:arEnd]))
+	outputMessage.append(" 比對結果： ")
+	#print(outputMessage[-1])
+	outputMessage.append(" "*4+"Ref [{}:{}] {}".format(arBegin,arEnd,refString[arBegin:arEnd]))
+	#print(outputMessage[-1])
 
 	aqBegin=alignment.query_begin+cqBegin
 	aqEnd=alignment.query_end+cqBegin
-	print(" "*4+"Qry [{}:{}] {}".format(aqBegin,aqEnd,qryString[aqBegin:aqEnd]))
+	outputMessage.append(" "*4+"Qry [{}:{}] {}".format(aqBegin,aqEnd,qryString[aqBegin:aqEnd]))
+	#print(outputMessage[-1])
 
 	if ((arBegin-crBegin)>=min_comp_length and (aqBegin-cqBegin)>=min_comp_length):
-		print("前區段:[{}:{}] :: [{}:{}] 可放入比較".format(crBegin,arBegin,cqBegin,aqBegin))
+		outputMessage.append("前區段:[{}:{}] :: [{}:{}] 可放入比較".format(crBegin,arBegin,cqBegin,aqBegin))
+		#print(outputMessage[-1])
 		compareTaskQueue.append((crBegin,arBegin,cqBegin,aqBegin))
 	else:
-		print("前區段:[{}:{}] :: [{}:{}] XXXXX".format(crBegin,arBegin,cqBegin,aqBegin))
+		outputMessage.append("前區段:[{}:{}] :: [{}:{}] XXXXX".format(crBegin,arBegin,cqBegin,aqBegin))
+		#print(outputMessage[-1])
 
 	if ((cqEnd-aqEnd)>=min_comp_length and (crEnd-arEnd)>=min_comp_length):
-		print("後區段:[{}:{}] :: [{}:{}] 可放入比較".format(arEnd,crEnd,aqEnd,cqEnd))
+		outputMessage.append("後區段:[{}:{}] :: [{}:{}] 可放入比較".format(arEnd,crEnd,aqEnd,cqEnd))
 		compareTaskQueue.append((arEnd,crEnd,aqEnd,cqEnd))
+		#print(outputMessage[-1])
 	else:
-		print("後區段:[{}:{}] :: [{}:{}] XXXXX".format(arEnd,crEnd,aqEnd,cqEnd))	
-	
-	#
+		outputMessage.append("後區段:[{}:{}] :: [{}:{}] XXXXX".format(arEnd,crEnd,aqEnd,cqEnd))	
+		#print(outputMessage[-1])
+
 
 		
 
@@ -119,10 +132,10 @@ r=alignment.alignment_report()
 r=r.replace("|","｜").replace("*","＊").replace("-","〇")
 
 #測試是否需要輸出檔案
+"""
 
 if (OUTPUT_filename):
 	with open(OUTPUT_filename,'w') as ofile:
-		ofile.write(r)
+		ofile.write("\r\n".join(outputMessage))
 else:
-	print(r)
-"""
+	print("\n".join(outputMessage))
