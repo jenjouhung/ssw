@@ -110,7 +110,7 @@ typedef struct {
 struct _profile{
 	__m128i* profile_byte;	// 0: none
 	__m128i* profile_word;	// 0: none
-	const int8_t* read;
+	const int16_t* read;
 	const int8_t* mat;
 	int32_t readLen;
 	int32_t n;
@@ -155,7 +155,7 @@ const uint8_t encoded_ops[] = {
 };
 
 /* Generate query profile rearrange query sequence & calculate the weight of match/mismatch. */
-static __m128i* qP_byte (const int8_t* read_num,
+static __m128i* qP_byte (const int16_t* read_num,
 				  const int8_t* mat,
 				  const int32_t readLen,
 				  const int32_t n,	/* the edge length of the squre matrix mat */
@@ -189,7 +189,7 @@ static __m128i* qP_byte (const int8_t* read_num,
    wight_match > 0, all other weights < 0.
    The returned positions are 0-based.
  */
-static alignment_end* sw_sse2_byte (const int8_t* ref,
+static alignment_end* sw_sse2_byte (const int16_t* ref,
 							 int8_t ref_dir,	// 0: forward ref; 1: reverse ref
 							 int32_t refLen,
 							 int32_t readLen,
@@ -359,6 +359,9 @@ end:
 	bests[1].ref = 0;
 	bests[1].read = 0;
 
+	//遮住 (end_ref-mask_Len) --> (end_ref+mask_Len)
+	//然後在其他的Regin, 用maxColumn[i] 找 second best
+
 	edge = (end_ref - maskLen) > 0 ? (end_ref - maskLen) : 0;
 	for (i = 0; i < edge; i ++) {
 		if (maxColumn[i] > bests[1].score) {
@@ -379,7 +382,7 @@ end:
 	return bests;
 }
 
-static __m128i* qP_word (const int8_t* read_num,
+static __m128i* qP_word (const int16_t* read_num,
 				  const int8_t* mat,
 				  const int32_t readLen,
 				  const int32_t n) {
@@ -403,7 +406,7 @@ static __m128i* qP_word (const int8_t* read_num,
 	return vProfile;
 }
 
-static alignment_end* sw_sse2_word (const int8_t* ref,
+static alignment_end* sw_sse2_word (const int16_t* ref,
 							 int8_t ref_dir,	// 0: forward ref; 1: reverse ref
 							 int32_t refLen,
 							 int32_t readLen,
@@ -581,8 +584,8 @@ end:
 	return bests;
 }
 
-static cigar* banded_sw (const int8_t* ref,
-				 const int8_t* read,
+static cigar* banded_sw (const int16_t* ref,
+				 const int16_t* read,
 				 int32_t refLen,
 				 int32_t readLen,
 				 int32_t score,
@@ -769,9 +772,9 @@ static cigar* banded_sw (const int8_t* ref,
 	return result;
 }
 
-static int8_t* seq_reverse(const int8_t* seq, int32_t end)	/* end is 0-based alignment ending position */
+static int16_t* seq_reverse(const int16_t* seq, int32_t end)	/* end is 0-based alignment ending position */
 {
-	int8_t* reverse = (int8_t*)calloc(end + 1, sizeof(int8_t));
+	int16_t* reverse = (int16_t*)calloc(end + 1, sizeof(int16_t));
 	int32_t start = 0;
 	while (LIKELY(start <= end)) {
 		reverse[start] = seq[end];
@@ -782,7 +785,7 @@ static int8_t* seq_reverse(const int8_t* seq, int32_t end)	/* end is 0-based ali
 	return reverse;
 }
 
-s_profile* ssw_init (const int8_t* read, const int32_t readLen, const int8_t* mat, const int32_t n, const int8_t score_size) {
+s_profile* ssw_init (const int16_t* read, const int32_t readLen, const int8_t* mat, const int32_t n, const int8_t score_size) {
 	s_profile* p = (s_profile*)calloc(1, sizeof(struct _profile));
 	p->profile_byte = 0;
 	p->profile_word = 0;
@@ -812,11 +815,17 @@ void init_destroy (s_profile* p) {
 }
 
 s_align* ssw_align (const s_profile* prof,
-					const int8_t* ref,
+					const int16_t* ref,
 				  	int32_t refLen,
 				  	const uint8_t weight_gapO,
 				  	const uint8_t weight_gapE,
-					const uint8_t flag,	//  (from high to low) bit 5: return the best alignment beginning position; 6: if (ref_end1 - ref_begin1 <= filterd) && (read_end1 - read_begin1 <= filterd), return cigar; 7: if max score >= filters, return cigar; 8: always return cigar; if 6 & 7 are both setted, only return cigar when both filter fulfilled
+					const uint8_t flag,	
+					//  (from high to low) 
+					// bit 5: return the best alignment beginning position;  這個應該一定會回傳。
+					// bit 6: if (ref_end1 - ref_begin1 <= filterd) && (read_end1 - read_begin1 <= filterd), return cigar; 
+					// bit 7: if max score >= filters, return cigar; 
+					// bit 8: always return cigar; 
+					// if 6 & 7 are both setted, only return cigar when both filter fulfilled
 					const uint16_t filters,
 					const int32_t filterd,
 					const int32_t maskLen) {
@@ -824,7 +833,7 @@ s_align* ssw_align (const s_profile* prof,
 	alignment_end* bests = 0, *bests_reverse = 0;
 	__m128i* vP = 0;
 	int32_t word = 0, band_width = 0, readLen = prof->readLen;
-	int8_t* read_reverse = 0;
+	int16_t* read_reverse = 0;
 	cigar* path;
 	s_align* r = (s_align*)calloc(1, sizeof(s_align));
 	r->ref_begin1 = -1;
@@ -866,6 +875,8 @@ s_align* ssw_align (const s_profile* prof,
 		r->ref_end2 = -1;
 	}
 	free(bests);
+	// flag ==0, 不回傳cigar
+	// flag ==2, 只回傳 score > filter的
 	if (flag == 0 || (flag == 2 && r->score1 < filters)) goto end;
 
 	// Find the beginning position of the best alignment.
@@ -882,9 +893,14 @@ s_align* ssw_align (const s_profile* prof,
 	r->ref_begin1 = bests_reverse[0].ref;
 	r->read_begin1 = r->read_end1 - bests_reverse[0].read;
 	free(bests_reverse);
+
+	// flag &7 ==0,  1 or 2 or 4 都沒有set, 那不用回傳
+	// flag ==2, flag ==4 的情形下需要再看進一步條件
+	// 若可以的話，就回傳
+
 	if ((7&flag) == 0 || ((2&flag) != 0 && r->score1 < filters) || ((4&flag) != 0 && (r->ref_end1 - r->ref_begin1 > filterd || r->read_end1 - r->read_begin1 > filterd))) goto end;
 
-	// Generate cigar.
+	// Generate cigar. (路徑)
 	refLen = r->ref_end1 - r->ref_begin1 + 1;
 	readLen = r->read_end1 - r->read_begin1 + 1;
 	band_width = abs(refLen - readLen) + 1;

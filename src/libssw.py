@@ -32,11 +32,17 @@ class AlignmentResult(Structure):
 
 ssw_profile_p = c_void_p
 matrix_type = c_int8
-symbol_type = c_int8
+# Modify by Joey, 2020/02/23
+#symbol_type = c_int8
+symbol_type = c_int16
+# End of Modify
 
 # ssw_init method
 ssw_profile_init = libssw.ssw_init
-ssw_profile_init.argtypes = [POINTER(c_int8), c_int32, POINTER(c_int8), c_int32, c_int8]
+# Modify by Joey, 2020/02/23
+#ssw_profile_init.argtypes = [POINTER(c_int8), c_int32, POINTER(c_int8), c_int32, c_int8]
+ssw_profile_init.argtypes = [POINTER(c_int16), c_int32, POINTER(c_int8), c_int32, c_int8]
+# End of Modify
 ssw_profile_init.restype = ssw_profile_p
 
 # init_destroy function
@@ -46,7 +52,12 @@ ssw_profile_del.restype = None
 
 # ssw_align function
 ssw_align_init = libssw.ssw_align
-ssw_align_init.argtypes = [ssw_profile_p, POINTER(c_int8), c_int32, c_uint8, c_uint8, c_uint8, c_uint16, c_int32, c_int32]
+# Modify by Joey, 2020/02/23
+#ssw_align_init.argtypes = [ssw_profile_p, POINTER(c_int8), c_int32, c_uint8, c_uint8, c_uint8, c_uint16, c_int32, c_int32]
+ssw_align_init.argtypes = [ssw_profile_p, POINTER(c_int16), c_int32, c_uint8, c_uint8, c_uint8, c_uint16, c_int32, c_int32]
+
+# End of Modify
+
 ssw_align_init.restype = POINTER(AlignmentResult)
 
 # align_destroy function

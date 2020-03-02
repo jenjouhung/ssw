@@ -75,7 +75,7 @@ typedef struct {
 			 -2 -2 -2  2 //T
 			mat is the pointer to the array {2, -2, -2, -2, -2, 2, -2, -2, -2, -2, 2, -2, -2, -2, -2, 2}
 */
-s_profile* ssw_init (const int8_t* read, const int32_t readLen, const int8_t* mat, const int32_t n, const int8_t score_size);
+s_profile* ssw_init (const int16_t* read, const int32_t readLen, const int8_t* mat, const int32_t n, const int8_t score_size);
 
 /*!	@function	Release the memory allocated by function ssw_init.
 	@param	p	pointer to the query profile structure
@@ -116,7 +116,7 @@ void init_destroy (s_profile* p);
 			0-based coordinate.
 */
 s_align* ssw_align (const s_profile* prof,
-					const int8_t* ref,
+					const int16_t* ref,
 					int32_t refLen,
 					const uint8_t weight_gapO,
 					const uint8_t weight_gapE,
