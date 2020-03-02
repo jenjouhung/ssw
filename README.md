@@ -1,7 +1,28 @@
 [![Build Status](https://travis-ci.org/vishnubob/ssw.svg?branch=master)](https://travis-ci.org/vishnubob/ssw)
 [![Coverage Status](https://coveralls.io/repos/vishnubob/ssw/badge.svg?branch=master&service=github)](https://coveralls.io/github/vishnubob/ssw?branch=master)
 
-#SSW: A Python Wrapper for the SIMD Smith-Waterman
+#SSW: A Python Wrapper for the SIMD Smith-Waterman 
+#With Unicode Text Comparsion Function
+
+## Notice
+
+ This Repository is forked from vishnubob/ssw, a great implemenation of swith waterman with SSE SIMD Command. However due to the limation of internal structue, the original version is not able to handle to the needs of comparing more than 128 differenet symbols at once. That's why we ceate this repo.
+
+## How to test my code
+
+I am not yet test the install command, it should work, but I am not sure. If you want to test it, please clone this repo, and run:
+
+```
+$python3 setup.py build_ext --inplace 
+```
+For compiling the c object
+
+Then run 
+```
+$python3 mytest.py data/test1.txt  data/test2.txt
+```
+
+For testing.
 
 ## Overview
 
