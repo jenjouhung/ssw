@@ -70,9 +70,9 @@ while(len(compareTaskQueue)>0):
 	cqString=qryString[cqBegin:cqEnd]
 	
 	outputMessage.append("========   My Report #{}  ========== ".format(num_turns))
-	#print(outputMessage[-1])
+	if(not OUTPUT_filename): print(outputMessage[-1])
 	outputMessage.append(" 比對對象：Ref[{}:{}] ::  Query[{}:{}] ".format(crBegin,crEnd,cqBegin,cqEnd))
-	#print(outputMessage[-1])
+	if(not OUTPUT_filename): print(outputMessage[-1])
 
 	"""
 	print("------------- 本次 Ref ------------ ")
@@ -93,32 +93,42 @@ while(len(compareTaskQueue)>0):
 	# cqBegin 可理解為 align_qry_begin
 	arBegin=alignment.reference_begin+crBegin
 	arEnd=alignment.reference_end+crBegin
-
-	outputMessage.append(" 比對結果： ")
-	#print(outputMessage[-1])
-	outputMessage.append(" "*4+"Ref [{}:{}] {}".format(arBegin,arEnd,refString[arBegin:arEnd]))
-	#print(outputMessage[-1])
-
 	aqBegin=alignment.query_begin+cqBegin
 	aqEnd=alignment.query_end+cqBegin
-	outputMessage.append(" "*4+"Qry [{}:{}] {}".format(aqBegin,aqEnd,qryString[aqBegin:aqEnd]))
-	#print(outputMessage[-1])
 
-	if ((arBegin-crBegin)>=min_comp_length and (aqBegin-cqBegin)>=min_comp_length):
-		outputMessage.append("前區段:[{}:{}] :: [{}:{}] 可放入比較".format(crBegin,arBegin,cqBegin,aqBegin))
-		#print(outputMessage[-1])
-		compareTaskQueue.append((crBegin,arBegin,cqBegin,aqBegin))
-	else:
-		outputMessage.append("前區段:[{}:{}] :: [{}:{}] XXXXX".format(crBegin,arBegin,cqBegin,aqBegin))
-		#print(outputMessage[-1])
+	arScore=alignment.score
+	arLen=arEnd-arBegin
+	aqLen=aqEnd-aqBegin
 
-	if ((cqEnd-aqEnd)>=min_comp_length and (crEnd-arEnd)>=min_comp_length):
-		outputMessage.append("後區段:[{}:{}] :: [{}:{}] 可放入比較".format(arEnd,crEnd,aqEnd,cqEnd))
-		compareTaskQueue.append((arEnd,crEnd,aqEnd,cqEnd))
-		#print(outputMessage[-1])
+	outputMessage.append(" 比對結果：score={}".format(arScore))
+	if (not OUTPUT_filename): print(outputMessage[-1])
+
+	outputMessage.append(" "*4+"Ref [{}:{}]({}) {}".format(arBegin,arEnd,arLen,refString[arBegin:arEnd]))
+	if (not OUTPUT_filename): print(outputMessage[-1])
+
+	outputMessage.append(" "*4+"Qry [{}:{}]({}) {}".format(aqBegin,aqEnd,aqLen,qryString[aqBegin:aqEnd]))
+	if (not OUTPUT_filename): print(outputMessage[-1])
+
+	#比對成果大於需求，表示有找到有效區段
+	if 	((arLen  >=min_comp_length)  and (aqLen >=min_comp_length)): 
+		if ((arBegin-crBegin)>=min_comp_length and (aqBegin-cqBegin)>=min_comp_length):
+			outputMessage.append("前區段:[{}:{}] :: [{}:{}] 可放入比較".format(crBegin,arBegin,cqBegin,aqBegin))
+			if (not OUTPUT_filename): print(outputMessage[-1])
+			compareTaskQueue.append((crBegin,arBegin,cqBegin,aqBegin))
+		else:
+			outputMessage.append("前區段:[{}:{}] :: [{}:{}] XXXXX".format(crBegin,arBegin,cqBegin,aqBegin))
+			print(outputMessage[-1])
+
+		if ((cqEnd-aqEnd)>=min_comp_length and (crEnd-arEnd)>=min_comp_length):
+			outputMessage.append("後區段:[{}:{}] :: [{}:{}] 可放入比較".format(arEnd,crEnd,aqEnd,cqEnd))
+			compareTaskQueue.append((arEnd,crEnd,aqEnd,cqEnd))
+			if (not OUTPUT_filename): print(outputMessage[-1])
+		else:
+			outputMessage.append("後區段:[{}:{}] :: [{}:{}] XXXXX".format(arEnd,crEnd,aqEnd,cqEnd))	
+			if (not OUTPUT_filename): print(outputMessage[-1])
 	else:
-		outputMessage.append("後區段:[{}:{}] :: [{}:{}] XXXXX".format(arEnd,crEnd,aqEnd,cqEnd))	
-		#print(outputMessage[-1])
+		if (not OUTPUT_filename): print("本次比對成果長度過短(ref:{},qry:{})，停止比對".format(arEnd-arBegin,aqEnd-aqBegin ))
+
 
 
 		
@@ -137,5 +147,5 @@ r=r.replace("|","｜").replace("*","＊").replace("-","〇")
 if (OUTPUT_filename):
 	with open(OUTPUT_filename,'w') as ofile:
 		ofile.write("\r\n".join(outputMessage))
-else:
-	print("\n".join(outputMessage))
+#else:
+	#print("\n".join(outputMessage))

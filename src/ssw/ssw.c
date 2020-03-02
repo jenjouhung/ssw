@@ -250,6 +250,7 @@ static alignment_end* sw_sse2_byte (const int16_t* ref,
 		end = -1;
 		step = -1;
 	}
+	// 這裡i 與最後的maxColumn[i]的關係
 	for (i = begin; LIKELY(i != end); i += step) {
 		int32_t cmp;
 		__m128i e, vF = vZero, vMaxColumn = vZero; /* Initialize F value to 0.
@@ -299,6 +300,8 @@ static alignment_end* sw_sse2_byte (const int16_t* ref,
 			for (j = 0; LIKELY(j < segLen); ++j) {
 				vH = _mm_load_si128(pvHStore + j);
 				vH = _mm_max_epu8(vH, vF);
+				//vH, vF 的關係，是否能夠apply到方向？
+				//這裡是否可以紀錄到所有位置的分數？
 				vMaxColumn = _mm_max_epu8(vMaxColumn, vH);	// newly added line
 				_mm_store_si128(pvHStore + j, vH);
 				vH = _mm_subs_epu8(vH, vGapO);
