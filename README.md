@@ -17,7 +17,7 @@ $python3 setup.py build_ext --inplace
 ```
 For compiling the c object
 
-For testing (example), please  run 
+For testing (example), please  run: 
 ```
 $python3 mytest.py data/test1.txt  data/test2.txt
 ```
