@@ -184,5 +184,3 @@ r=r.replace("|","｜").replace("*","＊").replace("-","〇")
 if (OUTPUT_filename):
 	with open(OUTPUT_filename,'w') as ofile:
 		ofile.write("\r\n".join(alignMessges))
-#else:
-	#print("\n".join(alignMessges))
