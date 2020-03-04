@@ -157,12 +157,12 @@ while (len(compareStringArray)):
 	loop+=1
 	#print("{},".format(loop),end="")
 	#endtime = datetime.datetime.now()
-	#print ("執行完成，花費：{:.6f} 秒".format((endtime-starttime).microseconds*0.00001))
+	#print ("執行完成，花費：{:.6f} 秒".format((endtime-starttime).microseconds*0.000001))
 	alignMessges = align(refString,qryString)
 
 
 t1= datetime.datetime.now()
-print ("執行完成，花費：{:.6f} 秒".format((t1-t0).microseconds*0.00001))
+print ("執行完成，花費：{} 秒".format((t1-t0).seconds))
 print ("-"*40)
 
 """
