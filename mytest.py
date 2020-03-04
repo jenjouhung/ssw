@@ -150,18 +150,19 @@ elif inputFormat == "sentencePair":
 loop=0
 
 t0 = datetime.datetime.now()
+
 while (len(compareStringArray)):
 	#starttime = datetime.datetime.now()
 	refString,qryString = compareStringArray.pop()
 	loop+=1
 	#print("{},".format(loop),end="")
 	#endtime = datetime.datetime.now()
-	#print ("執行完成，花費：{:.7f} 秒".format((endtime-starttime).microseconds*0.000001))
+	#print ("執行完成，花費：{:.6f} 秒".format((endtime-starttime).microseconds*0.00001))
 	alignMessges = align(refString,qryString)
 
 
 t1= datetime.datetime.now()
-print ("執行完成，花費：{} 秒".format((t1-t0).microseconds*0.000001))
+print ("執行完成，花費：{:.6f} 秒".format((t1-t0).microseconds*0.00001))
 print ("-"*40)
 
 """
