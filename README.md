@@ -22,6 +22,10 @@ For testing (example), please  run:
 $python3 mytest.py data/test1.txt  data/test2.txt
 ```
 
+Now, it is possible to compare data from sentence.tsv, please use -p 
+```
+$python3 mytest.py -p data/pair1.tsv
+```
 
 
 ## Overview
