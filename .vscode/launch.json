@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "args": ["data/test1.txt","data/test2.txt"],
+            "args": ["-p","data/pair1.tsv"],
             "console": "integratedTerminal"
         }
     ]

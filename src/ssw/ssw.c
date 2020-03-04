@@ -278,6 +278,7 @@ static alignment_end* sw_sse2_byte (const int16_t* ref,
 			vMaxColumn = _mm_max_epu8(vMaxColumn, vH);
 
 			/* Save vH values. */
+			//pvHStore 似乎是擺放 ref[i] 的比對結果
 			_mm_store_si128(pvHStore + j, vH);
 
 			/* Update vE value. */
@@ -298,11 +299,13 @@ static alignment_end* sw_sse2_byte (const int16_t* ref,
 		for (k = 0; LIKELY(k < 16); ++k) {
 			vF = _mm_slli_si128 (vF, 1);
 			for (j = 0; LIKELY(j < segLen); ++j) {
+				//由pvHStore 讀入有關 區塊 j 的暫存
 				vH = _mm_load_si128(pvHStore + j);
 				vH = _mm_max_epu8(vH, vF);
 				//vH, vF 的關係，是否能夠apply到方向？
 				//這裡是否可以紀錄到所有位置的分數？
 				vMaxColumn = _mm_max_epu8(vMaxColumn, vH);	// newly added line
+				//又存儲回pvHStore
 				_mm_store_si128(pvHStore + j, vH);
 				vH = _mm_subs_epu8(vH, vGapO);
 				vF = _mm_subs_epu8(vF, vGapE);
@@ -321,20 +324,27 @@ end:
 			max16(temp, vMaxScore);
 			vMaxScore = vMaxMark;
 
+			//這邊應該是只抓max的那一筆
 			if (LIKELY(temp > max)) {
 				max = temp;
 				if (max + bias >= 255) break;	//overflow
 				end_ref = i;
 
 				/* Store the column with the highest alignment score in order to trace the alignment ending position on read. */
+				//所以這裡抄寫出分數最高的那一串 pvHStore 到 pvHmax
 				for (j = 0; LIKELY(j < segLen); ++j) pvHmax[j] = pvHStore[j];
 			}
+			// 這裡應該想辦法把所有的pvHStore, 全部都抄下來
+			// 所以 pvHStore 只要了segLen * 128 的大小，因為只記一輪
+			// 我應該會需要關注 vF = _mm_max_epu8(vF, vH), 以便找出方向
+			// 是否可以用__m128i _mm_cmpeq_epi8 (__m128i a, __m128i b) 比較前後？
+		
 		}
 
 		/* Record the max score of current column. */
 		max16(maxColumn[i], vMaxColumn);
 		if (maxColumn[i] == terminate) break;
-	}
+	} // end of [i] loop
 
 	/* Trace the alignment ending position on read. */
 	uint8_t *t = (uint8_t*)pvHmax;

@@ -2,6 +2,7 @@ import six
 from six.moves import range
 from . import libssw
 from . import iupac
+from ctypes import *
 
 __all__ = ["ScoreMatrix", "NucleotideScoreMatrix", "UnicodeTextScoreMatrix", "Aligner", "Alignment"]
 
@@ -45,10 +46,14 @@ class ScoreMatrix(object):
     def set_alphabet(self, alphabet):
         #alphabet 輸入值為一連續字串，之後用tuple()分成各字元一筆
         self._alphabet = tuple(alphabet) if alphabet else tuple()
+
         #將分筆後的資料建立
         self.symbol_map = {symbol.upper(): idx for (idx, symbol) in enumerate(self._alphabet)}
-       #順便初始化match 與 dismatch 矩陣
+       
+       # 順便初始化match 與 dismatch 矩陣
         self._init_matrix()
+       
+
     #這裡設定 alphabet 的讀寫需經過  get_alphabet, set_alphabet 兩函式
     alphabet = property(get_alphabet, set_alphabet)
 
@@ -56,9 +61,21 @@ class ScoreMatrix(object):
         # libssw.matrix_type = cint_8
         # 初始化match 與 dismatch 矩陣，大小為 alphabet 長度的平方 * cint_8
         _matrix_type = libssw.matrix_type * (len(self.alphabet) ** 2)
+
         # 以上述大小產生矩陣空間
         #然後利用iter_matrix() 產生得分矩陣
-        self._matrix = _matrix_type(*self.iter_matrix())
+        #因過慢而改用 memset 
+        # self._matrix = _matrix_type(*self.iter_matrix())
+     
+        self._matrix = _matrix_type()
+
+        #利用ctypes 的memset 與 addressof 函式，初始化比對array
+        memset(addressof(self._matrix),self.mismatch,(len(self.alphabet) ** 2))
+        
+        L=len(self.alphabet)
+        for (i,row_symbol) in enumerate(self.alphabet):
+            self._matrix[i*L+i]=self.match
+
 
     def iter_matrix(self):
         for row_symbol in self.alphabet:
