@@ -152,7 +152,7 @@ class ScoreMatrix(object):
                     for j in range(i+1,L):
                         chx=self.alphabet[j]
                         if chx in self._varTable[ch]:
-                            #print("({}({}),{}({}))".format(ch,i,chx,j),end="")
+                            print("({}({}),{}({}))".format(ch,i,chx,j),end="")
                             self._matrix[i*L+j]=self._varmatch
 
             t2 = datetime.datetime.now()
