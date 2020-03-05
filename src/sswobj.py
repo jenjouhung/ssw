@@ -3,6 +3,7 @@ from six.moves import range
 from . import libssw
 from . import iupac
 from ctypes import *
+import datetime
 
 __all__ = ["ScoreMatrix", "NucleotideScoreMatrix", "UnicodeTextScoreMatrix", "Aligner", "Alignment"]
 
@@ -72,10 +73,19 @@ class ScoreMatrix(object):
         #利用ctypes 的memset 與 addressof 函式，初始化比對array
         memset(addressof(self._matrix),self.mismatch,(len(self.alphabet) ** 2))
         
-        L=len(self.alphabet)
-        for (i,row_symbol) in enumerate(self.alphabet):
-            self._matrix[i*L+i]=self.match
+        t0 = datetime.datetime.now()
 
+        L=len(self.alphabet)
+        for i, data in enumerate(self.alphabet):
+            self._matrix[i*L+i]=self.match
+            # if i%10==0:
+            #     for i in range(10):
+            #         if data in self.alphabet:
+            #             #for j, b in enumerate(self.alphabet):
+            #             pass
+
+        t1 = datetime.datetime.now()
+        print ("memory fill，花費：{:.7f} 秒".format((t1-t0).microseconds*0.00001))
 
     def iter_matrix(self):
         for row_symbol in self.alphabet:
