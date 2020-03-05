@@ -135,11 +135,11 @@ class ScoreMatrix(object):
         #利用ctypes 的memset 與 addressof 函式，初始化比對array
         memset(addressof(self._matrix),self.mismatch,(len(self.alphabet) ** 2))
         
-        t0 = datetime.datetime.now()
+        # t0 = datetime.datetime.now()
 
-        L=len(self.alphabet)
-        for i, data in enumerate(self.alphabet):
-            self._matrix[i*L+i]=self.match
+        # L=len(self.alphabet)
+        # for i, data in enumerate(self.alphabet):
+        #     self._matrix[i*L+i]=self.match
 
         t1 = datetime.datetime.now()
         #print ("memory fill[原]，花費：{:.7f} 秒".format((t1-t0).microseconds*0.00001))
@@ -152,7 +152,7 @@ class ScoreMatrix(object):
                     for j in range(i+1,L):
                         chx=self.alphabet[j]
                         if chx in self._varTable[ch]:
-                            print("({}({}),{}({}))".format(ch,i,chx,j),end="")
+                            #print("({}({}),{}({}))".format(ch,i,chx,j),end="")
                             self._matrix[i*L+j]=self._varmatch
 
             t2 = datetime.datetime.now()
