@@ -143,17 +143,19 @@ class ScoreMatrix(object):
 
         t1 = datetime.datetime.now()
         #print ("memory fill[原]，花費：{:.7f} 秒".format((t1-t0).microseconds*0.00001))
-
+        
+        L=len(self.alphabet)
         if self._varTable:
-            L=len(self.alphabet)
             for i, ch in enumerate(self.alphabet):
                 self._matrix[i*L+i]=self.match
                 if ch in self._varTable:
-                    for j in range(i+1,L):
-                        chx=self.alphabet[j]
+                    for j,chx in enumerate(self.alphabet[i+1:]):
                         if chx in self._varTable[ch]:
-                            #print("({}({}),{}({}))".format(ch,i,chx,j),end="")
-                            self._matrix[i*L+j]=self._varmatch
+                            self._matrix[i*L+(j+i+1)]=self._varmatch
+                            self._matrix[(j+i+1)*L+i]=self._varmatch   
+        else:
+            for i, ch in enumerate(self.alphabet):
+                self._matrix[i*L+i]=self.match
 
             t2 = datetime.datetime.now()
             #print ("memory fill[with異體字]，花費：{:.7f} 秒".format((t2-t1).microseconds*0.00001))
