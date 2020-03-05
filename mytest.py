@@ -2,10 +2,15 @@ import datetime
 from src import *
 import sys,getopt
 
-def align_init(allSymbols):
-	
-	#設定使用 UnicodeTextScoreMatrix
-	mUTSM=UnicodeTextScoreMatrix(alphabet=allSymbols)
+def align_init(allSymbols,variantTable=None):
+
+	if variantTable:
+		#設定使用 UnicodeTextScoreMatrix
+		# 帶入異體字表
+		mUTSM=UnicodeTextScoreMatrix(alphabet=allSymbols,variantTable=variantTable)
+	else:
+		#設定使用 UnicodeTextScoreMatrix
+		mUTSM=UnicodeTextScoreMatrix(alphabet=allSymbols)
 
 	# 初始化比對物件，帶入UnicodeTextScoreMatrix
 	# 尚待處理：加入分數門檻。
@@ -15,6 +20,7 @@ def align_init(allSymbols):
 
 def align(
 	refString,qryString,
+	variantTable=None, # 是否要進行異體字比對
 	minCompStrLen=10,  #欲比對之字串低於此門檻，便停止
 	distinctChars=None,
 	multipleAlignment=False  #是否要進行多次比對
@@ -33,7 +39,7 @@ def align(
 		dcs="".join(set(list(refString)+list(qryString)))
 
 	#處始化比對器
-	aligner = align_init(dcs)
+	aligner = align_init(dcs,variantTable)
 
 	compareTaskQueue=[]  #用來存放比較工作的Queue
 
@@ -54,7 +60,7 @@ def align(
 		#進行比對，不進行反向比對 (dna 比對專用)
 		
 		t2 = datetime.datetime.now()
-		alignment = aligner.align(reference=crString, query=cqString,revcomp=False)
+		alignment = aligner.align(reference=crString, query=cqString,revcomp=False,)
 
 		t3 = datetime.datetime.now()
 		#print ("第{}次比對，花費：{:.7f} 秒".format(num_turns,(t3 - t2).microseconds*0.000001))
@@ -88,7 +94,6 @@ def align(
 			outputMessage.append(" "*4+"Qry [{}:{}]({}) {}".format(aqBegin,aqEnd,aqLen,qryString[aqBegin:aqEnd]))
 			if (not OUTPUT_filename): print(outputMessage[-1])
 
-
 			#若 multipleAlignment == True 則進行切割與加入Queue
 			if (multipleAlignment):
 				if ((arBegin-crBegin)>=minCompStrLen and (aqBegin-cqBegin)>=minCompStrLen):
@@ -100,21 +105,24 @@ def align(
 	return outputMessage
 
 def usage():
-	print("usage: mytest.py [-o output FILE ] -p FILE1 [FILE2] ")
+	print("usage: mytest.py [-o output FILE ] [-pv] FILE1 [FILE2] ")
 
 
 # main function starts here:
+
+#重要的流程控制參數，與外來參數有關
+OUTPUT_filename=None
+inputFormat="fullText"  # 選項為：fullText  與 sentencePair
+variantMode = False # Ture/False 控制是否進行異體字比對
+variantFileLocation ="data/variants.txt"
+
 try:
-	opts, args = getopt.getopt(sys.argv[1:], "po:")
+	opts, args = getopt.getopt(sys.argv[1:], "pvo:")
 except getopt.GetoptError as err:
 	# print help information and exit:
 	print(err)  # will print something like "option -a not recognized"
 	usage()
 	sys.exit(2)
-
-
-OUTPUT_filename=None
-inputFormat="fullText"  # 選項為：fullText  與 sentencePair
 
 #抓取 -o 的選項與值
 for opt,value in opts:
@@ -122,6 +130,8 @@ for opt,value in opts:
 		OUTPUT_filename = value
 	if "-p" in opt:
 		inputFormat = "sentencePair"
+	if "-v" in opt:
+		variantMode = True
 
 #一般讀檔，需要兩個檔
 #測試始否給定 FILE1 與 FILE2
@@ -131,6 +141,8 @@ if (inputFormat=="fullText" and len(args) !=2) :
 	sys.exit(2)
 elif (inputFormat=="sentencePair" and len(args) !=1) :
 	print ("Please specify Sentence Pair FILE  for comparsion.")
+	usage()
+	sys.exit(2)
 
 compareStringArray=[]  #紀錄用來比較的Array
 
@@ -147,6 +159,11 @@ elif inputFormat == "sentencePair":
 			compareStringArray.append(tuple(s.strip().split("\t")))
 
 
+vt=None
+if variantMode:
+	vt=VariantTable(variantCSVFile=variantFileLocation)
+
+
 loop=0
 
 t0 = datetime.datetime.now()
@@ -158,7 +175,7 @@ while (len(compareStringArray)):
 	#print("{},".format(loop),end="")
 	#endtime = datetime.datetime.now()
 	#print ("執行完成，花費：{:.6f} 秒".format((endtime-starttime).microseconds*0.000001))
-	alignMessges = align(refString,qryString)
+	alignMessges = align(refString,qryString,vt)
 
 
 t1= datetime.datetime.now()
@@ -171,8 +188,6 @@ r=alignment.alignment_report()
 
 #先用簡單作法，讓字元能夠正確對應，之後會修正
 r=r.replace("|","｜").replace("*","＊").replace("-","〇")
-
-#測試是否需要輸出檔案
 """
 
 if (OUTPUT_filename):
