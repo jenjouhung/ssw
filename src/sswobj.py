@@ -5,14 +5,76 @@ from . import iupac
 from ctypes import *
 import datetime
 
-__all__ = ["ScoreMatrix", "NucleotideScoreMatrix", "UnicodeTextScoreMatrix", "Aligner", "Alignment"]
+__all__ = ["ScoreMatrix", "NucleotideScoreMatrix", "UnicodeTextScoreMatrix","VariantTable","Aligner", "Alignment"]
+
+class VariantTable(object):
+    def __init__(self,variantCSVFile=None,variantList=None):
+        self._variantDict= None
+        self._variantList = variantList  # 可給定variants 群組list, [[v1,v2,v3],[v2,v4,v6]...] 初始化
+        self._variantCSVFile=variantCSVFile #或給定CSV檔案，內容無檔頭為一行一群組
+
+        if (self._variantList):
+            #若給定 variantList 則以 variantList 進行_variantDict建構
+            self.readList(variantList)
+            if (self._variantCSVFile):
+                print("[Warning] variantList is given,  variantCSVFile will be ingore. ")
+        elif (self._variantCSVFile):
+             #若給定 variantCSVFile，則讀取variantCSVFile， 進行_variantDict建構
+            self.readCSV(variantCSVFile)
+        
+    def readCSV(self,variantCSVFile):
+        """
+                Read varaint CSV file
+                Output to  self._variantList, and proceed to self.readList for next step
+        """
+        self._variantCSVFile=variantCSVFile
+        self._variantList = []
+        try:
+            with open(variantCSVFile,'r') as vfile:
+                for s in vfile:
+                    vlist=s.strip().split(",")
+                    self._variantList.append(vlist)
+        except IOException as e:
+            print("[Fail] fail in reading variant file: ({})".format(variantCSVFile))
+            exit(2)
+        
+        self.readList(self._variantList)
+
+    def readList(self,variantList):
+        """
+               Build _variantList by reading self._variantList
+        """
+        self._variantList = variantList
+        self._variantDict={}
+
+        for record in self._variantList:
+            for v in record:
+                if v in  self._variantDict:
+                    self._variantDict[v]=list(set( self._variantDict[v]+ record[:]))
+                else:
+                    self._variantDict[v]= record[:]
+    
+    def get_table(self):
+        return self._variantDict
+    
+    def set_table(self,val):
+        self._variantDict = val
+
+    table = property(get_table, set_table)
+
 
 class ScoreMatrix(object):
     #程式預設 alphabet 是A~N的DNA可能值字串
-    def __init__(self, alphabet=None, match=3, mismatch=-3):
+    def __init__(self, alphabet=None, match=3, mismatch=-3,varmatch=2,variantTable=None):
         self._match = match
         self._mismatch = mismatch
-        self.alphabet = alphabet
+        self._varmatch = varmatch  #異體字比對分數
+        self._varTable = None
+        if variantTable:
+            self._varTable = variantTable.table
+
+        # 一旦設定，就會重算score 矩陣，因此必須在 self._varTable  才進行 alphabet 設定
+        self.alphabet = alphabet 
 
     def __getstate__(self):
         state = (self._match, self._mismatch, self.alphabet)
@@ -78,14 +140,24 @@ class ScoreMatrix(object):
         L=len(self.alphabet)
         for i, data in enumerate(self.alphabet):
             self._matrix[i*L+i]=self.match
-            # if i%10==0:
-            #     for i in range(10):
-            #         if data in self.alphabet:
-            #             #for j, b in enumerate(self.alphabet):
-            #             pass
 
         t1 = datetime.datetime.now()
-        print ("memory fill，花費：{:.7f} 秒".format((t1-t0).microseconds*0.00001))
+        #print ("memory fill[原]，花費：{:.7f} 秒".format((t1-t0).microseconds*0.00001))
+
+        if self._varTable:
+            L=len(self.alphabet)
+            for i, ch in enumerate(self.alphabet):
+                self._matrix[i*L+i]=self.match
+                if ch in self._varTable:
+                    for j in range(i+1,L):
+                        chx=self.alphabet[j]
+                        if chx in self._varTable[ch]:
+                            #print("({}({}),{}({}))".format(ch,i,chx,j),end="")
+                            self._matrix[i*L+j]=self._varmatch
+
+            t2 = datetime.datetime.now()
+            #print ("memory fill[with異體字]，花費：{:.7f} 秒".format((t2-t1).microseconds*0.00001))
+
 
     def iter_matrix(self):
         for row_symbol in self.alphabet:
@@ -142,11 +214,12 @@ class NucleotideScoreMatrix(ScoreMatrix):
 
 #自訂 UnicodeTextScoreMatrix 類別
 class UnicodeTextScoreMatrix(ScoreMatrix):
-    def __init__(self, alphabet, **kw):
+    def __init__(self, alphabet, variantTable=None,**kw):
         if alphabet == None:
              raise ValueError("UnicodeTextScoreMatrix needs alphabet value." )
+        
         #交由父類別初始化
-        super(UnicodeTextScoreMatrix, self).__init__(alphabet=alphabet, **kw)
+        super(UnicodeTextScoreMatrix, self).__init__(alphabet=alphabet, variantTable=variantTable,**kw)
 
     def test_score(self, symbol_1, symbol_2):
         return self._get_score(symbol_1, symbol_2)
