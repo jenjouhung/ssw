@@ -7,6 +7,10 @@ import datetime
 
 __all__ = ["ScoreMatrix", "NucleotideScoreMatrix", "UnicodeTextScoreMatrix","VariantTable","Aligner", "Alignment"]
 
+MATCH =1
+MISMATCH=0
+VARMATCH=2
+
 class VariantTable(object):
     def __init__(self,variantCSVFile=None,variantList=None):
         self._variantDict= None
@@ -61,7 +65,6 @@ class VariantTable(object):
         self._variantDict = val
 
     table = property(get_table, set_table)
-
 
 class ScoreMatrix(object):
     #程式預設 alphabet 是A~N的DNA可能值字串
@@ -135,36 +138,29 @@ class ScoreMatrix(object):
         #利用ctypes 的memset 與 addressof 函式，初始化比對array
         memset(addressof(self._matrix),self.mismatch,(len(self.alphabet) ** 2))
         
-        # t0 = datetime.datetime.now()
-
-        # L=len(self.alphabet)
-        # for i, data in enumerate(self.alphabet):
-        #     self._matrix[i*L+i]=self.match
-
-        t1 = datetime.datetime.now()
-        #print ("memory fill[原]，花費：{:.7f} 秒".format((t1-t0).microseconds*0.00001))
-        
         L=len(self.alphabet)
+
+        for i, ch in enumerate(self.alphabet):
+            #填入 i ==j 的 match
+            self._matrix[i*L+i]=self.match
+
+        #若有設定_varTable, 額外更新異體字對應分數
         if self._varTable:
             for i, ch in enumerate(self.alphabet):
-                self._matrix[i*L+i]=self.match
+                #若該字出現在Variant Table 內
                 if ch in self._varTable:
+                    # 將self.alphabet 內，排於在該字後的內容逐一取出
                     for j,chx in enumerate(self.alphabet[i+1:]):
+                        # 比對是否新字在原字的異體字清單中
                         if chx in self._varTable[ch]:
+                            #更新對應的位置之score 為 self._varmatch, 必須對稱更新
+                            # j 為相對位置，正確絕對位置為：j+i+1
                             self._matrix[i*L+(j+i+1)]=self._varmatch
-                            self._matrix[(j+i+1)*L+i]=self._varmatch   
-        else:
-            for i, ch in enumerate(self.alphabet):
-                self._matrix[i*L+i]=self.match
-
-            t2 = datetime.datetime.now()
-            #print ("memory fill[with異體字]，花費：{:.7f} 秒".format((t2-t1).microseconds*0.00001))
-
+                            self._matrix[(j+i+1)*L+i]=self._varmatch
 
     def iter_matrix(self):
         for row_symbol in self.alphabet:
             for col_symbol in self.alphabet:
-                #遞迴兩圈，透過_get_score 取得分數，並建立得分矩陣
                 yield self._get_score(row_symbol, col_symbol)
 
     def _get_score(self, symbol_1, symbol_2):
@@ -172,7 +168,8 @@ class ScoreMatrix(object):
         return (self.match if self.test_match(symbol_1, symbol_2) else self.mismatch)
 
     def test_match(self, symbol_1, symbol_2):
-        return symbol_1.upper() == symbol_2.upper()
+         return MATCH if symbol_1.upper() == symbol_2.upper() else MISMATCH
+       
 
     def convert_sequence_to_ints(self, seq):
         seq = seq.upper()
@@ -207,10 +204,10 @@ class NucleotideScoreMatrix(ScoreMatrix):
         _sym_1 = symbol_1.upper()
         _sym_2 = symbol_2.upper()
         if _sym_1 == _sym_2:
-            return True
+            return MATCH
         if _sym_1 in iupac.NucleotideTable:
             matches = iupac.NucleotideTable[_sym_1]["matches"]
-            return (_sym_2 in matches)
+            return MATCH if (_sym_2 in matches) else MISMATCH
         return super(NucleotideScoreMatrix, self).test_match(symbol_1, symbol_2)
 
 
@@ -223,13 +220,21 @@ class UnicodeTextScoreMatrix(ScoreMatrix):
         #交由父類別初始化
         super(UnicodeTextScoreMatrix, self).__init__(alphabet=alphabet, variantTable=variantTable,**kw)
 
-    def test_score(self, symbol_1, symbol_2):
-        return self._get_score(symbol_1, symbol_2)
+    def _get_score(self, symbol_1, symbol_2):
+        if symbol_1==symbol_2:
+            return self._match
+        elif (self._varTable and symbol_1 in self._varTable.tabe and symbol_2 in self._varTable.tabe[symbol1]):
+            return self._varmatch
+        else: 
+            return self._mismatch
     
-    #為了新增異體字的partial match, 需要在這個ScoreMatrix中新增
-    # 1. pMatch 參數 (get, set函式)
-    # 2. overwrite _get_score 函式
-    # 3. overwrite _test_match 函式，這個函式跟列印有關，可能需要改line 270
+    def test_match(self, symbol_1, symbol_2):
+        if symbol_1==symbol_2:
+            return MATCH
+        elif (self._varTable and symbol_1 in self._varTable and symbol_2 in self._varTable[symbol_1]):
+            return VARMATCH
+        else: 
+            return MISMATCH
 
 
 
@@ -340,7 +345,7 @@ class Aligner(object):
         #alignment 收到的回傳值，是s_align結構，在ssw.h : #48-#58 定義
         #內容為: ssw.c 中的 ssw_align 在取得 best物件後，再加上trace path後，包裝的結果
         #將結果包裝成較為容易使用的物件
-        alignment_instance = Alignment(alignment, query, reference, self.matrix)
+        alignment_instance = Alignment(alignment, query, reference, self.matrix, encoding="utf-8")
         
         #釋放記憶體
         libssw.ssw_profile_del(profile)
@@ -348,7 +353,7 @@ class Aligner(object):
         return alignment_instance
 
 class Alignment(object):
-    def __init__ (self, alignment, query, reference, matrix=None):
+    def __init__ (self, alignment, query, reference, matrix=None, encoding="latin"):
         self.score = alignment.contents.score
         self.score2 = alignment.contents.score2
         self.reference = reference
@@ -361,12 +366,13 @@ class Alignment(object):
         self.reference_coverage = (self.reference_end - self.reference_begin + 1) / len(self.reference)
         self.matrix = matrix
         self._cigar_string = [alignment.contents.cigar[idx] for idx in range(alignment.contents.cigarLen)]
+        self._encoding=encoding  #latin or utf-8
 
     @property
     def iter_cigar(self):
         for val in self._cigar_string:
             op_len = libssw.cigar_int_to_len(val)
-            op_char = libssw.cigar_int_to_op(val).decode("latin")
+            op_char = libssw.cigar_int_to_op(val).decode(self._encoding)
             yield (op_len, op_char)
 
     @property
@@ -387,7 +393,12 @@ class Alignment(object):
         r_seq = self.reference[self.reference_begin: self.reference_end + 1]
         q_seq = self.query[self.query_begin: self.query_end + 1]
         r_line = m_line = q_line = ''
-        match_flag = lambda rq: '|' if self.matrix.test_match(*rq) else '*'
+        #定義函式 lambda rq
+        if self._encoding =="utf-8":
+            match_flag = lambda rq: '｜' if self.matrix.test_match(*rq)==MATCH else '＊' if self.matrix.test_match(*rq) == MISMATCH else '％' 
+        else:
+            match_flag = lambda rq: '|' if self.matrix.test_match(*rq) else '*' if self.matrix.test_match(*rq) == MISMATCH else '%'
+
         for (op_len, op_char) in self.iter_cigar:
             op_len = int(op_len)
             if op_char.upper() == 'M':
@@ -402,16 +413,24 @@ class Alignment(object):
                 q_index += op_len
             elif op_char.upper() == 'I':
                 # insertion into reference
-                r_line += '-' * op_len
-                m_line += ' ' * op_len
+                if self._encoding =="utf-8":
+                    r_line += '〇' * op_len
+                    m_line += '  ' * op_len
+                else:
+                    r_line += '-' * op_len
+                    m_line += ' ' * op_len
                 q_line += q_seq[q_index: q_index + op_len]
                 #  only query index change
                 q_index += op_len
             elif op_char.upper() == 'D':
                 # deletion from reference
                 r_line += r_seq[r_index: r_index + op_len]
-                m_line += ' ' * op_len
-                q_line += '-' * op_len
+                if self._encoding =="utf-8":
+                    m_line += '  ' * op_len
+                    q_line +=  '〇'* op_len
+                else:
+                    m_line += ' ' * op_len
+                    q_line += '-' * op_len
                 #  only ref index change
                 r_index += op_len
         return (r_line, m_line, q_line)
