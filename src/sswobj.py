@@ -38,7 +38,7 @@ class VariantTable(object):
                 for s in vfile:
                     vlist=s.strip().split(",")
                     self._variantList.append(vlist)
-        except IOException as e:
+        except OSError as e:
             print("[Fail] fail in reading variant file: ({})".format(variantCSVFile))
             exit(2)
         
@@ -51,12 +51,13 @@ class VariantTable(object):
         self._variantList = variantList
         self._variantDict={}
 
-        for record in self._variantList:
+        # 2020.03.09 _variantDict 內容改紀錄該字元所參與的Group編號 = Line
+        for idx, record in enumerate(self._variantList):
             for v in record:
                 if v in  self._variantDict:
-                    self._variantDict[v]=list(set( self._variantDict[v]+ record[:]))
+                    self._variantDict[v].append(idx)
                 else:
-                    self._variantDict[v]= record[:]
+                    self._variantDict[v]=[idx]
     
     def get_table(self):
         return self._variantDict
@@ -145,18 +146,49 @@ class ScoreMatrix(object):
             self._matrix[i*L+i]=self.match
 
         #若有設定_varTable, 額外更新異體字對應分數
+        # if self._varTable:
+        #     for i, ch in enumerate(self.alphabet):
+        #         #若該字出現在Variant Table 內
+        #         if ch in self._varTable:
+        #             # 將self.alphabet 內，排於在該字後的內容逐一取出
+        #             for j,chx in enumerate(self.alphabet[i+1:]):
+        #                 # 比對是否新字在原字的異體字清單中
+        #                 if chx in self._varTable[ch]:
+        #                     #更新對應的位置之score 為 self._varmatch, 必須對稱更新
+        #                     # j 為相對位置，正確絕對位置為：j+i+1
+        #                     self._matrix[i*L+(j+i+1)]=self._varmatch
+        #                     self._matrix[(j+i+1)*L+i]=self._varmatch
+
+        #若有設定_varTable, 額外更新異體字對應分數
         if self._varTable:
+
+            #異體字比對所需資料暫存結構
+            groupMatchDict={}
+            MatchList=[]
+
             for i, ch in enumerate(self.alphabet):
                 #若該字出現在Variant Table 內
                 if ch in self._varTable:
-                    # 將self.alphabet 內，排於在該字後的內容逐一取出
-                    for j,chx in enumerate(self.alphabet[i+1:]):
-                        # 比對是否新字在原字的異體字清單中
-                        if chx in self._varTable[ch]:
-                            #更新對應的位置之score 為 self._varmatch, 必須對稱更新
-                            # j 為相對位置，正確絕對位置為：j+i+1
-                            self._matrix[i*L+(j+i+1)]=self._varmatch
-                            self._matrix[(j+i+1)*L+i]=self._varmatch
+                    # 取出self._varTable中所紀錄的該字元的參與Group
+                    for vgno in self._varTable[ch]:
+                        # groupMatchDict, 用於紀錄某一個group Number, 現在有哪個字出現
+                        if vgno in groupMatchDict:
+                            #若vgno 已經紀錄於groupMatchDict中，則增加紀錄
+                            groupMatchDict[vgno].append(i)
+                            #並且於 groupMatchDict[vgno] 成長到2個成員時，紀錄到 matchList 內
+                            if (len(groupMatchDict[vgno])==2):
+                                MatchList.append(groupMatchDict[vgno])
+                        else:
+                            # 紀錄vgno 首次紀錄於groupMatchDict中
+                            groupMatchDict[vgno]=[i]
+                
+            #比對完成後，設定Score，但因為有多個成員，所以必須Group 顯示
+            for grp in MatchList:
+                for inx, x in enumerate(grp[:-1]):
+                    for y in grp[inx+1:]:
+                        # print("({}({}),{}({}))".format(self.alphabet[x],x,self.alphabet[y],y))
+                        self._matrix[x*L+y]=self._varmatch
+                        self._matrix[y*L+x]=self._varmatch
 
     def iter_matrix(self):
         for row_symbol in self.alphabet:

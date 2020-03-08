@@ -189,12 +189,12 @@ loop=0
 t0 = datetime.datetime.now()
 
 while (len(compareStringArray)):
-	#starttime = datetime.datetime.now()
+	# starttime = datetime.datetime.now()
 	refString,qryString = compareStringArray.pop()
 	loop+=1
 	#print("{},".format(loop),end="")
-	#endtime = datetime.datetime.now()
-	#print ("執行完成，花費：{:.6f} 秒".format((endtime-starttime).microseconds*0.000001))
+	# endtime = datetime.datetime.now()
+	# print ("執行完成，花費：{:.6f} 秒".format((endtime-starttime).microseconds*0.000001))
 	alignMessges = align(refString,qryString,variantTable=vt)
 	for m in alignMessges:
 		print(m)
