@@ -25,7 +25,15 @@ class VariantTable(object):
         elif (self._variantCSVFile):
              #若給定 variantCSVFile，則讀取variantCSVFile， 進行_variantDict建構
             self.readCSV(variantCSVFile)
-        
+    
+    def IsVariant(self,x,y):
+        if  x in  self._variantDict and y in  self._variantDict:
+            setX=set(self._variantDict[x])
+            setY=set(self._variantDict[y])
+            return (len((setX & setY))>0)
+        else:
+            return False
+
     def readCSV(self,variantCSVFile):
         """
                 Read varaint CSV file
@@ -74,8 +82,10 @@ class ScoreMatrix(object):
         self._mismatch = mismatch
         self._varmatch = varmatch  #異體字比對分數
         self._varTable = None
+        self._varTableObj = None
         if variantTable:
-            self._varTable = variantTable.table
+            self._varTableObj = variantTable
+            self._varTable = self._varTableObj.table
 
         # 一旦設定，就會重算score 矩陣，因此必須在 self._varTable  才進行 alphabet 設定
         self.alphabet = alphabet 
@@ -144,20 +154,6 @@ class ScoreMatrix(object):
         for i, ch in enumerate(self.alphabet):
             #填入 i ==j 的 match
             self._matrix[i*L+i]=self.match
-
-        #若有設定_varTable, 額外更新異體字對應分數
-        # if self._varTable:
-        #     for i, ch in enumerate(self.alphabet):
-        #         #若該字出現在Variant Table 內
-        #         if ch in self._varTable:
-        #             # 將self.alphabet 內，排於在該字後的內容逐一取出
-        #             for j,chx in enumerate(self.alphabet[i+1:]):
-        #                 # 比對是否新字在原字的異體字清單中
-        #                 if chx in self._varTable[ch]:
-        #                     #更新對應的位置之score 為 self._varmatch, 必須對稱更新
-        #                     # j 為相對位置，正確絕對位置為：j+i+1
-        #                     self._matrix[i*L+(j+i+1)]=self._varmatch
-        #                     self._matrix[(j+i+1)*L+i]=self._varmatch
 
         #若有設定_varTable, 額外更新異體字對應分數
         if self._varTable:
@@ -263,7 +259,7 @@ class UnicodeTextScoreMatrix(ScoreMatrix):
     def test_match(self, symbol_1, symbol_2):
         if symbol_1==symbol_2:
             return MATCH
-        elif (self._varTable and symbol_1 in self._varTable and symbol_2 in self._varTable[symbol_1]):
+        elif (self._varTableObj and self._varTableObj.IsVariant(symbol_1, symbol_2)):
             return VARMATCH
         else: 
             return MISMATCH
