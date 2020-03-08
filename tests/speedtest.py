@@ -18,8 +18,13 @@ print("-"*25+"Method 1, varDict[v]=[v,v1,v2,v3]..."+"-"*25)
 
 T0 = datetime.datetime.now()
 
+# 1: Line by Line
+# 2: CSV Style
+MESSAGE_TYPE=2
 variant_dict = {}
-#開啟異體字表
+variant_dict2 = {}
+
+#開啟異體字表 (M1)
 try:
     with open(variantFileLocation,'r') as vfile:
         for s in vfile:
@@ -29,8 +34,25 @@ try:
                     variant_dict[v]=list(set(variant_dict[v]+ vlist[:]))
                 else:
                      variant_dict[v] = vlist[:]
-except IOException as e:
+except OSError as e:
     print("異體字資料檔 ({}) 開啟失敗，請確認檔案是否存在".format(variantFileLocation))
+
+
+#開啟異體字表 (M3)
+vgrpNo=0 # Variant Group Number = Line No.
+try:
+    with open(variantFileLocation,'r') as vfile:
+        for s in vfile:
+            vgrpNo+=1
+            vlist=s.strip().split(",")
+            for v in vlist:
+                if v in variant_dict2:
+                    variant_dict2[v].append(vgrpNo)
+                else:
+                     variant_dict2[v] = [vgrpNo]
+except OSError as e:
+    print("異體字資料檔 ({}) 開啟失敗，請確認檔案是否存在".format(variantFileLocation))
+
 
 T1= datetime.datetime.now()
 # print ("[1]讀取異體字表，花費：{:.6f} 秒".format((T1-T0).microseconds*0.000001))
@@ -51,16 +73,56 @@ with open(args[0],'r') as ifile1:
         # print ("  [2.2]製作不重複字串，花費：{:.6f} 秒".format((t2-t1).microseconds*0.000001))
         
         st = datetime.datetime.now()
-        print("出現於異體字表：")
         for i,v in enumerate(dcs):
             if v in variant_dict:
                 for vc in dcs[i+1:]:
                     if vc in variant_dict[v]:
+                        pass
+                        print("({},{})".format(v,vc),end="")
+        print()
+
+        timedata =[]
+
+        et = datetime.datetime.now()
+        timedata.append("{:.6f}".format((et-st).microseconds*0.000001))
+        if (MESSAGE_TYPE == 1): print ("  [2.3](important) 尋找是否在vairant 中[M1]，花費：{:.6f} 秒".format((et-st).microseconds*0.000001))
+
+        st = datetime.datetime.now()
+        for i,v in enumerate(dcs):
+            if v in variant_dict:
+                for vc in variant_dict[v]: 
+                    if vc in dcs[i+1:]:
                         print("({},{})".format(v,vc),end="")
         print()
 
         et = datetime.datetime.now()
-        print ("  [2.3](important) 尋找是否在vairant 中[M1]，花費：{:.6f} 秒".format((et-st).microseconds*0.000001))
+        timedata.append("{:.6f}".format((et-st).microseconds*0.000001))
+        if (MESSAGE_TYPE == 1): print ("  [2.3](important) 尋找是否在vairant 中[M2]，花費：{:.6f} 秒".format((et-st).microseconds*0.000001))
+
+        groupMatchDict={}
+        MatchList=[]
+        st = datetime.datetime.now()
+        for i,v in enumerate(dcs):  
+            if v in variant_dict2:
+                for vgno in variant_dict2[v]:
+                    if vgno in groupMatchDict:
+                        groupMatchDict[vgno].append((i,v))
+                        if (len(groupMatchDict[vgno])==2):
+                            MatchList.append(groupMatchDict[vgno])
+                    else:
+                        groupMatchDict[vgno]=[(i,v)]
+                
+        for grp in MatchList:
+            for inx, dataX in enumerate(grp[:-1]):
+                for dataY in grp[inx+1:]:
+                    print("({}({}),{}({}))".format(dataX[1],dataX[0],dataY[1],dataY[0]))
+
+        et = datetime.datetime.now()
+        timedata.append("{:.6f}".format((et-st).microseconds*0.000001))
+        if (MESSAGE_TYPE == 1): print ("  [2.3](important) 尋找是否在vairant 中[M3]，花費：{:.6f} 秒".format((et-st).microseconds*0.000001))
+
+        if (MESSAGE_TYPE == 2):
+            print("timedata,"+",".join(timedata))
 
         #print(dcs)
 
