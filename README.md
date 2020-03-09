@@ -22,11 +22,30 @@ For testing (example), please  run:
 $python3 mytest.py data/test1.txt  data/test2.txt
 ```
 
-Now, it is possible to compare data from sentence.tsv, please use -p 
+## Command Line parameters
+
+-p: source data in pair format (ID1 \tab Text1 \tab ID2 \tab Text2 )
+
 ```
-$python3 mytest.py -p data/pair1.tsv
+$python3 mytest.py -p data/pair2.tsv
 ```
 
+-v: with varaint characters comparsion. It will read varaint character file from /data/varinats.txt. If two characters are varinats, it will get +2 (by default), rather than mismacth score (-3 by default)
+
+```
+$python3 mytest.py -pv data/pair1.tsv
+```
+
+-o: to save comapre result to an external file
+```
+python3 mytest.py -o a.txt -pv data/P185n1618_10000_IDText.tsv
+```
+
+-d: print debug message
+
+```
+python3 mytest.py -pvd data/P185n1618_10000_IDText.tsv
+```
 
 ## Overview
 
