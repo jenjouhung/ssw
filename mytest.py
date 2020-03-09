@@ -177,7 +177,7 @@ elif (inputFormat=="sentencePair" and len(args) !=1) :
 
 compareStringArray=[]  #紀錄用來比較的Array
 
-print("開始執行比對：")
+if (OUTPUT_filename): print("開始執行比對：")
 
 if inputFormat == "fullText":
 	#開檔, reference & query
@@ -222,7 +222,7 @@ while (len(compareStringArray)):
 		speed = (tms)/(loop+1)
 		expTime = speed*(task_length-loop)*0.000001
 		#print("\r開始比對... {:.0f}% ({:.2f} ms/pair) (剩餘時間:{:.2} sec)".format(progress,speed,expTime),end="",flush=True)
-		print("\r開始比對... {:.0f}% ".format(progress),end="",flush=True)
+		if (OUTPUT_filename): print("\r開始比對... {:.0f}% ".format(progress),end="",flush=True)
 
 	refID,refString,qryID,qryString = compareStringArray.pop()
 	loop+=1
