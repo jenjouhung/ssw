@@ -203,6 +203,11 @@ if variantMode:
 	print("異體字比對：On")
 
 
+vt=None
+if variantMode:
+	vt=VariantTable(variantCSVFile=variantFileLocation)
+
+
 loop=0
 
 t0 = datetime.datetime.now()
