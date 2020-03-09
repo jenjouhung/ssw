@@ -35,8 +35,8 @@ try:
         for rowX,rowY in rows:
             #參照行號資訊
             ofile.write("{}\t{}\t{}\t{}\r\n".format(
-               rowX,sentences_data[rowX]["text_with_punc"],
-               rowY,sentences_data[rowY]["text_with_punc"])
+               rowX,sentences_data[rowX]["text"],
+               rowY,sentences_data[rowY]["text"])
                )
 except FileNotFoundError as e:
     print("[Fail] Pair File (csv): ({})".format(PAIR_FILE))

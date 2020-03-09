@@ -8,7 +8,6 @@ try:
 except getopt.GetoptError as err:
 	# print help information and exit:
 	print(err)  # will print something like "option -a not recognized"
-	usage()
 	sys.exit(2)
 
 if (len(args) !=1) :

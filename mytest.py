@@ -19,7 +19,8 @@ def align_init(allSymbols,variantTable=None):
 	return alignerObject
 
 def align(
-	refString,qryString,
+	refID,refString,qryID,qryString,
+	msgType = 2, # 可能值為 1: 正式輸出, 2: Debug 輸出
 	minCompLen=10,  #欲比對之字串低於此門檻，便停止
 	distinctChars=None, #預輸入的不重複字 (optional)
 	variantTable=None, # 異體字比對表，有傳值進來就會啟動異體字比對 (optional)
@@ -46,8 +47,6 @@ def align(
 	#比較句長於MIN_COMP_LENGTH，放入比較範圍Queue
 	if (len(refString)>=minCompLen and len(qryString)>=minCompLen):
 		compareTaskQueue=[(0,len(refString),0,len(qryString))]
-	
-
 
 	while(len(compareTaskQueue)>0):
 		num_turns+=1 #迴圈記數
@@ -74,40 +73,48 @@ def align(
 		
 		#比對成果大於需求，表示有找到有效區段
 		if 	((arLen  >=minCompLen)  and (aqLen >=minCompLen)): 
-			msg=alignReport(alignment,crString,cqString,comInterval,msgType=2,nturn=num_turns)
+			msg=alignReport(alignment,refID,crString,qryID,cqString,comInterval,msgType,nturn=num_turns)
 
 			#若 multipleAlignment == True 則進行切割與加入Queue
 			#這部份考慮要廢掉了
-			if (multipleAlignment):
-				if ((arBegin-crBegin)>=minCompStrLen and (aqBegin-cqBegin)>=minCompStrLen):
-					compareTaskQueue.append((crBegin,arBegin,cqBegin,aqBegin))
+			# 2020/03/09 先封存
+			# if (multipleAlignment):
+			# 	if ((arBegin-crBegin)>=minCompStrLen and (aqBegin-cqBegin)>=minCompStrLen):
+			# 		compareTaskQueue.append((crBegin,arBegin,cqBegin,aqBegin))
 
-				if ((cqEnd-aqEnd)>=minCompStrLen and (crEnd-arEnd)>=minCompStrLen):
-					compareTaskQueue.append((arEnd,crEnd,aqEnd,cqEnd))
+			# 	if ((cqEnd-aqEnd)>=minCompStrLen and (crEnd-arEnd)>=minCompStrLen):
+			# 		compareTaskQueue.append((arEnd,crEnd,aqEnd,cqEnd))
 	
 	return msg
 
-def alignReport(alignment, crString,cqString,compareInterval,nturn=-1,msgType=2):
+def alignReport(alignment, refID,crString,qryID,cqString,compareInterval,
+									msgType=2,nturn=-1):
 	# msgType = 1, 正式輸出訊息
 	# msgType = 2, Debug 訊息
 	# msgType = 3, 原程式Report
 	crBegin,crEnd,cqBegin,cqEnd=compareInterval
 
-	arBegin=alignment.reference_begin+crBegin
-	arEnd=alignment.reference_end+crBegin
+	# arBegin=alignment.reference_begin+crBegin
+	# arEnd=alignment.reference_end+crBegin
 	# aqBegin 可理解為 align_qry_begin
-	aqBegin=alignment.query_begin+cqBegin
-	aqEnd=alignment.query_end+cqBegin
+	# aqBegin=alignment.query_begin+cqBegin
+	# aqEnd=alignment.query_end+cqBegin
 
 	arScore=alignment.score
-	arLen=alignment.reference_end-alignment.reference_begin
-	aqLen=alignment.query_end-alignment.query_begin
+	# arLen=alignment.reference_end-alignment.reference_begin
+	# aqLen=alignment.query_end-alignment.query_begin
 
 	msg =[]
 # class Alignment(object):
 #     def __init__ (self, alignment, query, reference, matrix=None):
-	if (msgType ==1): #判斷 1 的bit 是否有set 
-		pass
+#sid1,sid2,score,align1,align2,s1_start,s1_end,s2_start,s2_end
+#P1618_001_0007,T1799_001_0034,38,眾生---生死相續皆由不知常住真心,眾生無始生-死相續皆由不知常住真心,23,36,2,17
+	if (msgType ==1): #判斷 1 的bit 是否有set
+		m=alignment.alignment
+		r = [refID,qryID,arScore,m[0].replace("〇","-"),m[2].replace("〇","-"),crBegin,crEnd,cqBegin,cqEnd]
+		s="\t".join(str(d) for d in r)
+		msg.append(s)
+	
 	elif (msgType==2): #判斷 2 的bit 是否有set 
 		msg.append("========   My Report #{}  ========== ".format(nturn))
 		msg.append("比對對象：Ref[{}:{}] ::  Query[{}:{}] ".format(crBegin,crEnd,cqBegin,cqEnd))
@@ -117,6 +124,7 @@ def alignReport(alignment, crString,cqString,compareInterval,nturn=-1,msgType=2)
 		msg.append("")
 		# msg.append(" "*4+"Ref [{}:{}]({}) {}".format(arBegin,arEnd,arLen,refString[arBegin:arEnd]))
 		# msg.append(" "*4+"Qry [{}:{}]({}) {}".format(aqBegin,aqEnd,aqLen,qryString[aqBegin:aqEnd]))
+	
 	elif (msgType==3):
 		r=alignment.alignment_report()
 		#r=alignment.alignment
@@ -125,7 +133,7 @@ def alignReport(alignment, crString,cqString,compareInterval,nturn=-1,msgType=2)
 	return msg
 
 def usage():
-	print("usage: mytest.py [-o output FILE ] [-pv] FILE1 [FILE2] ")
+	print("usage: mytest.py [-o output FILE ] [-dpv] FILE1 [FILE2] ")
 
 
 # main function starts here:
@@ -135,9 +143,10 @@ OUTPUT_filename=None
 inputFormat="fullText"  # 選項為：fullText  與 sentencePair
 variantMode = False # Ture/False 控制是否進行異體字比對
 variantFileLocation ="data/variants.txt"
+mssageType=1 # 1: 正式輸出, 2: Debug輸出 (可由command line 加上-d 來控制)
 
 try:
-	opts, args = getopt.getopt(sys.argv[1:], "pvo:")
+	opts, args = getopt.getopt(sys.argv[1:], "dpvo:")
 except getopt.GetoptError as err:
 	# print help information and exit:
 	print(err)  # will print something like "option -a not recognized"
@@ -152,6 +161,8 @@ for opt,value in opts:
 		inputFormat = "sentencePair"
 	if "-v" in opt:
 		variantMode = True
+	if "-d" in opt:
+		mssageType=2
 
 #一般讀檔，需要兩個檔
 #測試始否給定 FILE1 與 FILE2
@@ -166,43 +177,63 @@ elif (inputFormat=="sentencePair" and len(args) !=1) :
 
 compareStringArray=[]  #紀錄用來比較的Array
 
+print("開始執行比對：")
+
 if inputFormat == "fullText":
 	#開檔, reference & query
+	# 2020/03/09 輸入格式改為：id \tab text
 	with open(args[0],'r') as ifile1, open(args[1],'r') as ifile2:
-		refString=ifile1.read().strip()
-		qryString=ifile2.read().strip()
-		compareStringArray.append((refString,qryString))
+		print("資料模式：兩全文檔比對")
+		print("Reading Files：{},{}".format(args[0],args[1]))
+		ref=ifile1.read().strip().split("\t")
+		qry=ifile2.read().strip().split("\t")
+		compareStringArray.append((ref[0],ref[1],qry[0],qry[1]))
 elif inputFormat == "sentencePair":
+	# 2020/03/09 輸入格式改為：id1 \tab text1 \tab id2 \tab text2
 	#開檔，依序讀入需要分割的字串
+	print("Reading File：{}".format(args[0]))
+	print("資料模式：Sentence Pair")
 	with open(args[0],'r') as ifile1:
 		for s in ifile1:
 			compareStringArray.append(tuple(s.strip().split("\t")))
 
-
 vt=None
 if variantMode:
 	vt=VariantTable(variantCSVFile=variantFileLocation)
+	print("異體字比對：On")
 
 
 loop=0
 
 t0 = datetime.datetime.now()
 
+alignMessges=[]
+task_length=len(compareStringArray)
 while (len(compareStringArray)):
-	# starttime = datetime.datetime.now()
-	refString,qryString = compareStringArray.pop()
+	if (loop%1000)==0:
+		tnow = datetime.datetime.now()
+		tms=(tnow-t0).microseconds
+		progress = loop/task_length*100
+		speed = (tms)/(loop+1)
+		expTime = speed*(task_length-loop)*0.000001
+		#print("\r開始比對... {:.0f}% ({:.2f} ms/pair) (剩餘時間:{:.2} sec)".format(progress,speed,expTime),end="",flush=True)
+		print("\r開始比對... {:.0f}% ".format(progress),end="",flush=True)
+
+	refID,refString,qryID,qryString = compareStringArray.pop()
 	loop+=1
 	#print("{},".format(loop),end="")
 	# endtime = datetime.datetime.now()
 	# print ("執行完成，花費：{:.6f} 秒".format((endtime-starttime).microseconds*0.000001))
-	alignMessges = align(refString,qryString,variantTable=vt)
-	for m in alignMessges:
-		print(m)
+	rMsg = align(refID,refString,qryID,qryString,mssageType,variantTable=vt)
+	alignMessges.extend(rMsg)
+	if (not OUTPUT_filename):
+		for m in rMsg:
+			print(m)
 
 
 t1= datetime.datetime.now()
+print ("")
 print ("執行完成，花費：{} 秒".format((t1-t0).seconds))
-print ("-"*40)
 
 #取得內建 report 字串
 # r=alignment.alignment_report()
@@ -211,5 +242,6 @@ print ("-"*40)
 # r=r.replace("|","｜").replace("*","＊").replace("-","〇")
 
 if (OUTPUT_filename):
+	print ("結果輸出於：{}".format(OUTPUT_filename))
 	with open(OUTPUT_filename,'w') as ofile:
 		ofile.write("\r\n".join(alignMessges))
