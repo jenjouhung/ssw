@@ -46,7 +46,7 @@ class VariantTable(object):
                 for s in vfile:
                     vlist=s.strip().split(",")
                     self._variantList.append(vlist)
-        except OSError as e:
+        except FileNotFoundError as e:
             print("[Fail] fail in reading variant file: ({})".format(variantCSVFile))
             exit(2)
         

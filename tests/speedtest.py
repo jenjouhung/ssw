@@ -34,7 +34,7 @@ try:
                     variant_dict[v]=list(set(variant_dict[v]+ vlist[:]))
                 else:
                      variant_dict[v] = vlist[:]
-except OSError as e:
+except FileNotFoundError as e:
     print("異體字資料檔 ({}) 開啟失敗，請確認檔案是否存在".format(variantFileLocation))
 
 
@@ -50,7 +50,7 @@ try:
                     variant_dict2[v].append(vgrpNo)
                 else:
                      variant_dict2[v] = [vgrpNo]
-except OSError as e:
+except FileNotFoundError as e:
     print("異體字資料檔 ({}) 開啟失敗，請確認檔案是否存在".format(variantFileLocation))
 
 
