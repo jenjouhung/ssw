@@ -268,7 +268,7 @@ class UnicodeTextScoreMatrix(ScoreMatrix):
 
 #初始點
 class Aligner(object):
-    def __init__(self, reference=None, matrix=None, datatype="dna", gap_open=2, gap_extend=2):
+    def __init__(self, reference=None, matrix=None, datatype="dna", gap_open=3, gap_extend=2):
         #gap_open 與 gap_extend 定義：
         #就是Insert 與 Delete 分數。雖然給的是正分，但系統中是減分作用
         #gap_open 應該是在最前面與最後面，扣分大
