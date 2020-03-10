@@ -1,6 +1,7 @@
 import datetime
 from src import *
 import sys,getopt
+import os
 
 def align_init(allSymbols,variantTable=None):
 
@@ -138,11 +139,13 @@ def usage():
 
 # main function starts here:
 
+FILE_PATH=os.path.dirname(__file__)
+
 #重要的流程控制參數，與外來參數有關
 OUTPUT_filename=None
 inputFormat="fullText"  # 選項為：fullText  與 sentencePair
 variantMode = False # Ture/False 控制是否進行異體字比對
-variantFileLocation ="data/variants.txt"
+variantFileLocation =os.path.join(FILE_PATH,"data","variants.txt")
 mssageType=1 # 1: 正式輸出, 2: Debug輸出 (可由command line 加上-d 來控制)
 
 try:
