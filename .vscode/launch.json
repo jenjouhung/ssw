@@ -5,12 +5,36 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: 目前檔案",
+            "name": "Debug Python: mytest.py",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
+            "program": "${workspaceRoot}/mytest.py",
             "args": ["-pv","data/pair1.tsv"],
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Python launch",
+            "type": "python",
+            "request": "launch",
+            "stopOnEntry": true,
+            "pythonPath": "/usr/bin/python3",
+            "program": "${workspaceRoot}/mytest.py",
+            "args": ["-pv","data/pair1.tsv"],
+            "cwd": "",
+            "console": "externalTerminal",
+            "env": {},
+            "envFile": "${workspaceRoot}/.env",
+            "debugOptions": [
+                "WaitOnAbnormalExit",
+                "WaitOnNormalExit"
+            ]
+        },        { 
+            "name": "GDB Attach proc 0",
+            "type": "cppdbg",
+            "request": "attach",
+            "program": "/usr/bin/python3",
+            "processId": "${command:pickProcess}",
+            "MIMode": "gdb"
         }
     ]
 }

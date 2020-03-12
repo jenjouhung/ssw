@@ -148,6 +148,7 @@ variantMode = False # Ture/False 控制是否進行異體字比對
 variantFileLocation =os.path.join(FILE_PATH,"data","variants.txt")
 mssageType=1 # 1: 正式輸出, 2: Debug輸出 (可由command line 加上-d 來控制)
 
+
 try:
 	opts, args = getopt.getopt(sys.argv[1:], "dpvo:")
 except getopt.GetoptError as err:
