@@ -53,7 +53,7 @@ python3 unissw.py -c config.json -pvd data/P185n1618_10000_IDText.tsv
 ```
 if you didn't specify by -c, the system will read config.json in package root by default.
 
-## About Configre.json
+## Configre.json
 I have move few impoartant setting out from my code. Now you can revise the configure file to set those parameters for your task. Now the possible settings are:
 ```
 {
@@ -68,6 +68,53 @@ I have move few impoartant setting out from my code. Now you can revise the conf
 ```
 All of them are optional, and above value equals the defualt values in the unissw program.
 
+
+## Batch Mode
+run unissw_dila.py for batch mode process, it has two command line options:
+
+-t : specify task file [required]. The task file is for setting details for multiple compare tasks.
+```
+python3 unissw_dila.py  -t batch-data/task.json
+```
+
+Details of task.json is in following section
+
+-c: change the path of configure file. [optional]
+```
+python3 unissw_dila.py -c config.json -t batch-data/task.json
+```
+if you didn't specify by -c, the system will read config.json in package root by default.
+
+
+## task.json
+
+In task.json, you can specify how to run multiple comapare tasks. Here is an example.
+
+```
+[
+  {
+    "data_folder": "/data/5_GitArea/ssw/batch-data",
+    "data_type": "s",
+    "sent_file1":"in/a-sentences.tsv",     /* required  */
+    "sent_file2":"in/b-sentences.tsv",     /* required  */
+    "pair_file": "in/sentence-pairs.tsv",  /* required  */
+    "output_file":  "out/out-s-a-b.tsv"
+  },
+  {
+    "data_folder": "/data/5_GitArea/ssw/data",
+    "data_type": "p",               
+    "pair_file": "pair1.tsv",           /* required  */
+    "output_file":  "/data/5_GitArea/ssw/data/out-t-1-2.tsv"
+  },
+  {
+    "data_type": "t",
+    "sent_file1":"/data/5_GitArea/ssw/data/1.txt",     /* required  */
+    "sent_file2":"/data/5_GitArea/ssw/data/1.txt",     /* required  */
+    "output_file":  "/data/5_GitArea/ssw/data/out-t-1-2.tsv"
+  }
+]
+```
+The example consists of three tasks of all three possible runing types with unissw and unissw dila. That are: data_type set to "s"(seperate mode),"p" (pair mode), and "t" (two text modes).
 
 ## Overview
 

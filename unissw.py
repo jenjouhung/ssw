@@ -157,7 +157,10 @@ def run_align_task(
 	variantMode, variantfile, #異體字比對相關
 	print_to_file=False  ): 		#Debug訊息 是否列印出來 
 	
-	alignMessges =[]
+	alignMessges= []
+	#準備檔頭
+	if (print_to_file):	alignMessges.append("sid1\tsid2\tscore\talign1\talign2\ts1_start\ts1_end\ts2_start\ts2_end")
+
 
 	if ("with_variant" in config and config["with_variant"]=="True"):
 		variantMode = True # Ture/False 控制是否進行異體字比對

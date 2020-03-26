@@ -2,15 +2,16 @@
   {
     "data_folder": "/data/5_GitArea/ssw/batch-data",
     "data_type": "s",
-    "sent_file1":"a-sentences.tsv",
-    "sent_file2":"a-sentences.tsv",
-    "pair_file": "sentence-pairs.tsv",
+    "sent_file1":"in/a-sentences.tsv",
+    "sent_file2":"in/b-sentences.tsv",
+    "pair_file": "in/sentence-pairs.tsv",
     "output_file":  "out/out-s-a-b.tsv"
   },
   {
     "data_folder": "/data/5_GitArea/ssw/data",
     "data_type": "p",
-    "pair_file": "pair1.tsv"
+    "pair_file": "pair1.tsv",
+    "output_file":  "/data/5_GitArea/ssw/data/out-t-1-2.tsv"
   },
   {
     "data_type": "t",

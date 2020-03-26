@@ -21,9 +21,9 @@ def process_task_record(tr):
     if ("output_file" in tr):
         output_file = os.path.join(file_base,  tr["output_file"])
 
+    #  開始進行各 task record 細節比對
     if (tr["data_type"] =="p"):  # (P)air Mode, pair 檔案內含比對文字
-        if not ("pair_file" in tr ):
-            raise SystemExit("Error: 11 Task FILE ERROR: must set pair_file when data_type set to p. \n Occucrs in{}".format(tr))
+        if not ("pair_file" in tr ): raise SystemExit("Error: 11 Task FILE ERROR: must set pair_file when data_type set to p. \n Occucrs in{}".format(tr))
 
         pair_file = os.path.join(file_base,  tr["pair_file"])
 
@@ -33,24 +33,35 @@ def process_task_record(tr):
             for s in ifile1:
                 # 內容格式為：id1 \tab text1 \tab id2 \tab text2
                 r.append(tuple(s.strip().split("\t")))
-        return output_file,r
-
 
     elif (tr["data_type"] =="s"):  #  (S)eperate mode: id, sentence 分開檔案儲存
-        pass
-    # "data_folder": "/data/5_GitArea/ssw/batch-data",
-    # "data_type": "s",
-    # "sent-file1":"a-sentences.tsv",
-    # "sent-file2":"a-sentences.tsv",
-    # "pair-file": "sentence-pairs.tsv",
-    # "output_file":  "out/a-b.dat"
+
+        if not ("pair_file" in tr ):  raise SystemExit("Error: 11 Task FILE ERROR: must set pair_file when data_type set to s. \n Occucrs in{}".format(tr))
+        if not ("sent_file1" in tr ):  raise SystemExit("Error: 12 Task FILE ERROR: must set sent_file1 when data_type set to s. \n Occucrs in{}".format(tr))
+        if not ("sent_file2" in tr ): raise SystemExit("Error: 13 Task FILE ERROR: must set sent_file2 when data_type set to s. \n Occucrs in{}".format(tr))
+
+        print("資料模式：pair, sentence 分離模式")
+        sent_file1 = os.path.join(file_base,  tr["sent_file1"])
+        sent_file2 = os.path.join(file_base,  tr["sent_file2"])
+        pair_file = os.path.join(file_base,  tr["pair_file"])
+
+        sent_dict={}
+
+        with open(sent_file1,'r') as sfile1, open(sent_file2,'r') as sfile2, open(pair_file,'r') as pfile:
+            print("讀取資料檔：{}".format(sent_file1))
+            s1 = dict([ (line.strip().split("\t")) for line in sfile1])
+
+            print("讀取資料檔：{}".format(sent_file2))
+            s2 = dict([ (line.strip().split("\t")) for line in sfile2])
+            sent_dict  = {**s1, **s2}  # 合併s1, s2
+
+            plines = [line.strip().split("\t") for line in pfile]
+
+            r = [(sid1,sent_dict[sid1],sid2,sent_dict[sid2]) for sid1, sid2 in plines]
 
     elif (tr["data_type"] =="t"):  # (T)wo texts mode: 兩個文字檔，各自內含一句。
-        if not ("sent_file1" in tr ):
-            raise SystemExit("Error: 12 Task FILE ERROR: must set sent_file1 when data_type set to t. \n Occucrs in{}".format(tr))
-
-        if not ("sent_file2" in tr ):
-            raise SystemExit("Error: 13 Task FILE ERROR: must set sent_file2 when data_type set to t. \n Occucrs in{}".format(tr))
+        if not ("sent_file1" in tr ): raise SystemExit("Error: 12 Task FILE ERROR: must set sent_file1 when data_type set to t. \n Occucrs in{}".format(tr))
+        if not ("sent_file2" in tr ): raise SystemExit("Error: 13 Task FILE ERROR: must set sent_file2 when data_type set to t. \n Occucrs in{}".format(tr))
 
         sent_file1 = os.path.join(file_base,  tr["sent_file1"])
         sent_file2 = os.path.join(file_base,  tr["sent_file2"])
@@ -61,7 +72,7 @@ def process_task_record(tr):
             ref=ifile1.read().strip().split("\t")
             qry=ifile2.read().strip().split("\t")
             r.append((ref[0],ref[1],qry[0],qry[1]))
-        return output_file,r
+
     else:
         raise SystemExit("Error: 1X unsupported data type:{}. \n Occucrs in{}".format(tr["data_type"],tr))
 
@@ -131,6 +142,7 @@ def unissw_dila_main():
             print ("結果輸出於：{}".format(OUTPUT_filename))
             with open(OUTPUT_filename,'w') as ofile:
                 ofile.write("\r\n".join(alignMessges))
+            print("-"*60)
 
 
 
