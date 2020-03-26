@@ -5,10 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: 目前檔案",
+            "name": "Python: unissw_dila",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
+            "program": "unissw_dila.py",
+            "args": [
+                "-c",
+                "config.json",
+                "-t",
+                "batch-data/in/task.json"
+            ],
             "console": "integratedTerminal"
         },
         {
@@ -17,8 +23,11 @@
             "request": "launch",
             "program": "${workspaceRoot}/unissw.py",
             "args": [
-                "-p",
-                "test.tsv"
+                "-pd",
+                "-c",
+                "config.json",
+                "data/pair1.tsv"
+
             ],
             "console": "integratedTerminal"
         },

@@ -245,8 +245,10 @@ class UnicodeTextScoreMatrix(ScoreMatrix):
         if alphabet == None:
              raise ValueError("UnicodeTextScoreMatrix needs alphabet value." )
         
-        #交由父類別初始化
-        super(UnicodeTextScoreMatrix, self).__init__(alphabet=alphabet, variantTable=variantTable,**kw)
+        #交由父類別初始化, 並設定分數
+        super(UnicodeTextScoreMatrix, self).__init__(
+            alphabet=alphabet, variantTable=variantTable,**kw)
+            # match=3, mismatch=-3,varmatch=2,
 
     def _get_score(self, symbol_1, symbol_2):
         if symbol_1==symbol_2:

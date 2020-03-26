@@ -2,25 +2,46 @@ import datetime
 from src import *
 import sys,getopt
 import os
+import json
 
-def align_init(allSymbols,variantTable=None):
+# # 系統比對分數預設值
+MATCH_SCORE= 3
+MISMATCH_SCORE=-3
+VARMATCH_SCORE=2
+GAP_OPEN = -3
+GAP_EXTEND = -2
+
+
+def align_init(allSymbols,variantTable=None,
+		mScore=MATCH_SCORE,varScore=VARMATCH_SCORE,
+		misScore=MISMATCH_SCORE, 
+		gapOpenScore=GAP_OPEN, gapExtendScore=GAP_EXTEND):
 
 	if variantTable:
 		#設定使用 UnicodeTextScoreMatrix
 		# 帶入異體字表
-		mUTSM=UnicodeTextScoreMatrix(alphabet=allSymbols,variantTable=variantTable)
+		mUTSM=UnicodeTextScoreMatrix(
+			alphabet=allSymbols,variantTable=variantTable,
+			match=mScore, mismatch=misScore,varmatch=varScore)
 	else:
 		#設定使用 UnicodeTextScoreMatrix
-		mUTSM=UnicodeTextScoreMatrix(alphabet=allSymbols)
+		mUTSM=UnicodeTextScoreMatrix(alphabet=allSymbols,
+			match=mScore, mismatch=misScore)
 
 	# 初始化比對物件，帶入UnicodeTextScoreMatrix
 	# 尚待處理：加入分數門檻。
-	alignerObject = Aligner(matrix=mUTSM)
+	# 因為 Gap open, extend 要傳入正數，所以取abs
+	alignerObject = Aligner(matrix=mUTSM, 	gap_open=abs(gapOpenScore), gap_extend=abs(gapExtendScore))
 
 	return alignerObject
 
-def align(
+def run_align(
 	refID,refString,qryID,qryString,
+	mScore=MATCH_SCORE, # match分數設定 (optional)
+	varScore=VARMATCH_SCORE, # variant macth 分數設定 (optional)
+	misScore=MISMATCH_SCORE, # mismatch 分數設定 (optional)
+	gapOpen=GAP_OPEN, # gap open 分數設定 (optional)
+	gapExtend=GAP_EXTEND, # gap extend 分數設定 (optional)
 	msgType = 2, # 可能值為 1: 正式輸出, 2: Debug 輸出
 	minCompLen=10,  #欲比對之字串低於此門檻，便停止
 	distinctChars=None, #預輸入的不重複字 (optional)
@@ -43,7 +64,7 @@ def align(
 	# 	dcs="".join(set(list(refString)+list(qryString)))
 
 	#處始化比對器
-	aligner = align_init(dcs,variantTable)
+	aligner = align_init(dcs,variantTable,mScore,varScore,misScore,gapOpen,gapExtend)
 
 	#比較句長於MIN_COMP_LENGTH，放入比較範圍Queue
 	if (len(refString)>=minCompLen and len(qryString)>=minCompLen):
@@ -134,13 +155,26 @@ def alignReport(alignment, refID,crString,qryID,cqString,compareInterval,
 
 	return msg
 
-def usage():
-	print("usage: mytest.py [-o output FILE ] [-dpv] FILE1 [FILE2] ")
 
+def read_config (config_file):
+	config ={}
+	try:
+		with open(config_file,"r") as cfile:
+			config = json.load(cfile)
+			return config
+
+	except FileNotFoundError:
+		return {}
+		
 
 # main function starts here:
 def main():
+
+	def usage():
+		print("usage: mytest.py [-o output FILE ] [-c config FILE ][-dpv] FILE1 [FILE2] ")
+
 	FILE_PATH=os.path.dirname(__file__)
+	config_file="config.json"
 
 	#重要的流程控制參數，與外來參數有關
 	OUTPUT_filename=None
@@ -149,9 +183,8 @@ def main():
 	variantFileLocation =os.path.join(FILE_PATH,"data","variants.txt")
 	mssageType=1 # 1: 正式輸出, 2: Debug輸出 (可由command line 加上-d 來控制)
 
-
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "dpvo:")
+		opts, args = getopt.getopt(sys.argv[1:], "dpvo:c:")
 	except getopt.GetoptError as err:
 		# print help information and exit:
 		print(err)  # will print something like "option -a not recognized"
@@ -168,6 +201,8 @@ def main():
 			variantMode = True
 		if "-d" in opt:
 			mssageType=2
+		if "-c" in opt:
+			config_file = value
 
 	#一般讀檔，需要兩個檔
 	#測試始否給定 FILE1 與 FILE2
@@ -181,6 +216,21 @@ def main():
 		sys.exit(2)
 
 	compareStringArray=[]  #紀錄用來比較的Array
+
+	config=read_config(config_file)
+
+	if ("with_variant" in config and config["with_variant"]=="True"):
+		variantMode = True # Ture/False 控制是否進行異體字比對
+	
+	if ("variant_file" in config and config["variant_file"]):
+		variantFileLocation =config["variant_file"]
+
+	mScore = int(config["match_score"])  if ("match_score" in config) else MATCH_SCORE
+	varScore = int(config["variant_match_score"]) if ("variant_match_score" in config) else VARMATCH_SCORE
+	misScore = int(config["mismacth_penalty"]) if ("mismacth_penalty" in config) else MISMATCH_SCORE
+	gapOpen = int(config["gap_open_penalty"]) if ("gap_open_penalty" in config) else GAP_OPEN
+	gapExtend = int(config["gap_extend_penalty"]) if ("gap_extend_penalty" in config) else GAP_EXTEND
+
 
 	if (OUTPUT_filename): print("開始執行比對：")
 
@@ -206,11 +256,11 @@ def main():
 	if variantMode:
 		vt=VariantTable(variantCSVFile=variantFileLocation)
 		print("異體字比對：On")
+		print("異體字資料檔案: {} ".format(variantFileLocation))
 
-
-	vt=None
-	if variantMode:
-		vt=VariantTable(variantCSVFile=variantFileLocation)
+	# vt=None
+	# if variantMode:
+	# 	vt=VariantTable(variantCSVFile=variantFileLocation)
 
 
 	loop=0
@@ -234,12 +284,15 @@ def main():
 		#print("{},".format(loop),end="")
 		# endtime = datetime.datetime.now()
 		# print ("執行完成，花費：{:.6f} 秒".format((endtime-starttime).microseconds*0.000001))
-		rMsg = align(refID,refString,qryID,qryString,mssageType,variantTable=vt)
+		rMsg = run_align(
+						refID,refString,qryID,qryString,
+						mScore,varScore,misScore,gapOpen,gapExtend,
+						mssageType, variantTable=vt)
+
 		alignMessges.extend(rMsg)
 		if (not OUTPUT_filename):
 			for m in rMsg:
 				print(m)
-
 
 	t1= datetime.datetime.now()
 	print ("")
