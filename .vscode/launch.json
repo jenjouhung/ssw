@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceRoot}/mytest.py",
-            "args": ["-pv","data/pair1.tsv"],
+            "args": ["-p","test-out.tsv"],
             "console": "integratedTerminal"
         },
         {

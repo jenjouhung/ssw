@@ -95,11 +95,11 @@ def alignReport(alignment, refID,crString,qryID,cqString,compareInterval,
 	# msgType = 3, 原程式Report
 	crBegin,crEnd,cqBegin,cqEnd=compareInterval
 
-	# arBegin=alignment.reference_begin+crBegin
-	# arEnd=alignment.reference_end+crBegin
+	arBegin=alignment.reference_begin+crBegin
+	arEnd=alignment.reference_end+crBegin
 	# aqBegin 可理解為 align_qry_begin
-	# aqBegin=alignment.query_begin+cqBegin
-	# aqEnd=alignment.query_end+cqBegin
+	aqBegin=alignment.query_begin+cqBegin
+	aqEnd=alignment.query_end+cqBegin
 
 	arScore=alignment.score
 	# arLen=alignment.reference_end-alignment.reference_begin
@@ -112,13 +112,14 @@ def alignReport(alignment, refID,crString,qryID,cqString,compareInterval,
 #P1618_001_0007,T1799_001_0034,38,眾生---生死相續皆由不知常住真心,眾生無始生-死相續皆由不知常住真心,23,36,2,17
 	if (msgType ==1): #判斷 1 的bit 是否有set
 		m=alignment.alignment
-		r = [refID,qryID,arScore,m[0].replace("〇","-"),m[2].replace("〇","-"),crBegin,crEnd,cqBegin,cqEnd]
+		r = [refID,qryID,arScore,m[0].replace("〇","-"),m[2].replace("〇","-"),arBegin,arEnd,aqBegin,aqEnd]
 		s="\t".join(str(d) for d in r)
 		msg.append(s)
 	
 	elif (msgType==2): #判斷 2 的bit 是否有set 
 		msg.append("========   My Report #{}  ========== ".format(nturn))
 		msg.append("比對對象：Ref[{}:{}] ::  Query[{}:{}] ".format(crBegin,crEnd,cqBegin,cqEnd))
+		msg.append("align區域：Ref[{}:{}] ::  Query[{}:{}] ".format(arBegin,arEnd,aqBegin,aqEnd))		
 		msg.append("結果：score={}, 比對句：".format(arScore))
 		msg.append("")
 		msg+=alignment.alignment
