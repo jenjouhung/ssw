@@ -19,7 +19,7 @@ For compiling the c object
 
 For testing (example), please  run: 
 ```
-$python3 mytest.py data/test1.txt  data/test2.txt
+$python3 unissw.py data/test1.txt  data/test2.txt
 ```
 
 ## Command Line parameters
@@ -27,25 +27,47 @@ $python3 mytest.py data/test1.txt  data/test2.txt
 -p: source data in pair format (ID1 \tab Text1 \tab ID2 \tab Text2 )
 
 ```
-$python3 mytest.py -p data/pair2.tsv
+$python3 unissw.py -p data/pair2.tsv
 ```
 
 -v: with varaint characters comparsion. It will read varaint character file from /data/varinats.txt. If two characters are varinats, it will get +2 (by default), rather than mismacth score (-3 by default)
 
 ```
-$python3 mytest.py -pv data/pair1.tsv
+$python3 unissw.py -pv data/pair1.tsv
 ```
 
 -o: to save comapre result to an external file
 ```
-python3 mytest.py -o a.txt -pv data/P185n1618_10000_IDText.tsv
+python3 unissw.py -o a.txt -pv data/P185n1618_10000_IDText.tsv
 ```
 
 -d: print debug message
 
 ```
-python3 mytest.py -pvd data/P185n1618_10000_IDText.tsv
+python3 unissw.py -pvd data/P185n1618_10000_IDText.tsv
 ```
+
+-c: change the path of configure file.
+```
+python3 unissw.py -c config.json -pvd data/P185n1618_10000_IDText.tsv
+```
+if you didn't specify by -c, the system will read config.json in package root by default.
+
+## About Configre.json
+I have move few impoartant setting out from my code. Now you can revise the configure file to set those parameters for your task. Now the possible settings are:
+
+{
+  "gap_open_penalty": -3, 
+  "gap_extend_penalty": -2,
+  "match_score": 3,
+  "variant_match_score": 2,
+  "mismacth_penalty": -3,
+  "with_variant": "True"
+  "variant_file": "data/variants.txt"
+}
+
+All of them are optional, and above value equals the defualt values in the unissw program.
+
 
 ## Overview
 

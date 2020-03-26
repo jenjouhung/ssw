@@ -1,8 +1,9 @@
 {
-  "gap_open_penalty": -1,
-  "gap_extend_penalty": 0,
+  "gap_open_penalty": -3,
+  "gap_extend_penalty": -2,
   "match_score": 3,
   "variant_match_score": 2,
   "mismacth_penalty": -3,
-  "with_variant": "True"
+  "with_variant": "On",
+  "variant_file": "data/variants.txt"
 }

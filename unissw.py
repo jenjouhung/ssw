@@ -257,11 +257,8 @@ def main():
 		vt=VariantTable(variantCSVFile=variantFileLocation)
 		print("異體字比對：On")
 		print("異體字資料檔案: {} ".format(variantFileLocation))
-
-	# vt=None
-	# if variantMode:
-	# 	vt=VariantTable(variantCSVFile=variantFileLocation)
-
+	else:
+		print("異體字比對：Off")	
 
 	loop=0
 
