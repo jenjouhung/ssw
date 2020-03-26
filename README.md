@@ -55,7 +55,7 @@ if you didn't specify by -c, the system will read config.json in package root by
 
 ## About Configre.json
 I have move few impoartant setting out from my code. Now you can revise the configure file to set those parameters for your task. Now the possible settings are:
-
+```
 {
   "gap_open_penalty": -3, 
   "gap_extend_penalty": -2,
@@ -65,7 +65,7 @@ I have move few impoartant setting out from my code. Now you can revise the conf
   "with_variant": "True"
   "variant_file": "data/variants.txt"
 }
-
+```
 All of them are optional, and above value equals the defualt values in the unissw program.
 
 
