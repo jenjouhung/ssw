@@ -1,18 +1,21 @@
----
-compare_option:
-  gap_penalty: -3
-  match_score: 3
-  mismacth_penalty: -3
-  with_variant: True
-  variant_file: /data/5_GitArea/ssw/data/variants.txt
-output_option:
-  message_type: formal
-tasks:
-    data_folder: /data/5_GitArea/ssw/batch-data
-    task
-    -
-      dataType: id_sentence
-      output_file: ~
-      sent1: a-sentences.tsv
-      sent2: b-sentences.tsv
-      pair: sentence-pairs.tsv
+[
+  {
+    "data_folder": "/data/5_GitArea/ssw/batch-data",
+    "data_type": "s",
+    "sent_file1":"a-sentences.tsv",
+    "sent_file2":"a-sentences.tsv",
+    "pair_file": "sentence-pairs.tsv",
+    "output_file":  "out/out-s-a-b.tsv"
+  },
+  {
+    "data_folder": "/data/5_GitArea/ssw/data",
+    "data_type": "p",
+    "pair_file": "pair1.tsv"
+  },
+  {
+    "data_type": "t",
+    "sent_file1":"/data/5_GitArea/ssw/data/1.txt",
+    "sent_file2":"/data/5_GitArea/ssw/data/1.txt",
+    "output_file":  "/data/5_GitArea/ssw/data/out-t-1-2.tsv"
+  }
+]

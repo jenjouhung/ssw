@@ -35,7 +35,7 @@ def align_init(allSymbols,variantTable=None,
 
 	return alignerObject
 
-def run_align(
+def align_strings(
 	refID,refString,qryID,qryString,
 	mScore=MATCH_SCORE, # match分數設定 (optional)
 	varScore=VARMATCH_SCORE, # variant macth 分數設定 (optional)
@@ -58,10 +58,6 @@ def run_align(
 	
 	#不重複字元清單
 	dcs = distinctChars if distinctChars else "".join(set(list(refString)+list(qryString)))
-	# if distinctChars:
-	# 	dcs=distinctChars
-	# else:
-	# 	dcs="".join(set(list(refString)+list(qryString)))
 
 	#處始化比對器
 	aligner = align_init(dcs,variantTable,mScore,varScore,misScore,gapOpen,gapExtend)
@@ -95,7 +91,7 @@ def run_align(
 		
 		#比對成果大於需求，表示有找到有效區段
 		if 	((arLen  >=minCompLen)  and (aqLen >=minCompLen)): 
-			msg=alignReport(alignment,refID,crString,qryID,cqString,comInterval,msgType,nturn=num_turns)
+			msg=genreate_align_report(alignment,refID,crString,qryID,cqString,comInterval,msgType,nturn=num_turns)
 
 			#若 multipleAlignment == True 則進行切割與加入Queue
 			#這部份考慮要廢掉了
@@ -109,7 +105,7 @@ def run_align(
 	
 	return msg
 
-def alignReport(alignment, refID,crString,qryID,cqString,compareInterval,
+def genreate_align_report(alignment, refID,crString,qryID,cqString,compareInterval,
 									msgType=2,nturn=-1):
 	# msgType = 1, 正式輸出訊息
 	# msgType = 2, Debug 訊息
@@ -155,6 +151,66 @@ def alignReport(alignment, refID,crString,qryID,cqString,compareInterval,
 
 	return msg
 
+def run_align_task(
+	pairs, config,				 			#資料序列 與比對設定
+	messageType,  						#列印訊息type
+	variantMode, variantfile, #異體字比對相關
+	print_to_file=False  ): 		#Debug訊息 是否列印出來 
+	
+	alignMessges =[]
+
+	if ("with_variant" in config and config["with_variant"]=="True"):
+		variantMode = True # Ture/False 控制是否進行異體字比對
+	
+	if ("variant_file" in config and config["variant_file"]):
+		variantFileLocation =config["variant_file"]
+
+	mScore = int(config["match_score"])  if ("match_score" in config) else MATCH_SCORE
+	varScore = int(config["variant_match_score"]) if ("variant_match_score" in config) else VARMATCH_SCORE
+	misScore = int(config["mismacth_penalty"]) if ("mismacth_penalty" in config) else MISMATCH_SCORE
+	gapOpen = int(config["gap_open_penalty"]) if ("gap_open_penalty" in config) else GAP_OPEN
+	gapExtend = int(config["gap_extend_penalty"]) if ("gap_extend_penalty" in config) else GAP_EXTEND
+
+	vt=None
+	if variantMode:
+		vt=VariantTable(variantCSVFile=variantFileLocation)
+		print("異體字比對：On")
+		print("異體字資料檔案: {} ".format(variantFileLocation))
+	else:
+		print("異體字比對：Off")
+
+	loop=0
+
+	# t0 = datetime.datetime.now()
+
+	task_length=len(pairs)
+	while (len(pairs)):
+		if (loop%1000)==0:
+			tnow = datetime.datetime.now()
+			# tms=(tnow-t0).microseconds
+			progress = loop/task_length*100
+			# speed = (tms)/(loop+1)
+			# expTime = speed*(task_length-loop)*0.000001
+			#print("\r開始比對... {:.0f}% ({:.2f} ms/pair) (剩餘時間:{:.2} sec)".format(progress,speed,expTime),end="",flush=True)
+			if (print_to_file): print("\r開始比對... {:.0f}% ".format(progress),end="",flush=True)
+
+		refID,refString,qryID,qryString = pairs.pop()
+		loop+=1
+		#print("{},".format(loop),end="")
+		# endtime = datetime.datetime.now()
+		# print ("執行完成，花費：{:.6f} 秒".format((endtime-starttime).microseconds*0.000001))
+		rMsg = align_strings(
+						refID,refString,qryID,qryString,
+						mScore,varScore,misScore,gapOpen,gapExtend,
+						messageType, variantTable=vt)
+
+		alignMessges.extend(rMsg)
+		if (not print_to_file):
+			for m in rMsg:
+				print(m)
+
+	return alignMessges
+
 
 def read_config (config_file):
 	config ={}
@@ -168,7 +224,7 @@ def read_config (config_file):
 		
 
 # main function starts here:
-def main():
+def unissw_main():
 
 	def usage():
 		print("usage: mytest.py [-o output FILE ] [-c config FILE ][-dpv] FILE1 [FILE2] ")
@@ -180,8 +236,8 @@ def main():
 	OUTPUT_filename=None
 	inputFormat="fullText"  # 選項為：fullText  與 sentencePair
 	variantMode = False # Ture/False 控制是否進行異體字比對
-	variantFileLocation =os.path.join(FILE_PATH,"data","variants.txt")
-	mssageType=1 # 1: 正式輸出, 2: Debug輸出 (可由command line 加上-d 來控制)
+	variantFile =os.path.join(FILE_PATH,"data","variants.txt")
+	messageType=1 # 1: 正式輸出, 2: Debug輸出 (可由command line 加上-d 來控制)
 
 	try:
 		opts, args = getopt.getopt(sys.argv[1:], "dpvo:c:")
@@ -200,7 +256,7 @@ def main():
 		if "-v" in opt:
 			variantMode = True
 		if "-d" in opt:
-			mssageType=2
+			messageType=2
 		if "-c" in opt:
 			config_file = value
 
@@ -215,24 +271,12 @@ def main():
 		usage()
 		sys.exit(2)
 
-	compareStringArray=[]  #紀錄用來比較的Array
-
 	config=read_config(config_file)
-
-	if ("with_variant" in config and config["with_variant"]=="True"):
-		variantMode = True # Ture/False 控制是否進行異體字比對
-	
-	if ("variant_file" in config and config["variant_file"]):
-		variantFileLocation =config["variant_file"]
-
-	mScore = int(config["match_score"])  if ("match_score" in config) else MATCH_SCORE
-	varScore = int(config["variant_match_score"]) if ("variant_match_score" in config) else VARMATCH_SCORE
-	misScore = int(config["mismacth_penalty"]) if ("mismacth_penalty" in config) else MISMATCH_SCORE
-	gapOpen = int(config["gap_open_penalty"]) if ("gap_open_penalty" in config) else GAP_OPEN
-	gapExtend = int(config["gap_extend_penalty"]) if ("gap_extend_penalty" in config) else GAP_EXTEND
+	compareStringArray=[]  #紀錄用來比較的Array
+	print_to_file = True if OUTPUT_filename else False
 
 
-	if (OUTPUT_filename): print("開始執行比對：")
+	if (print_to_file): print("開始執行比對：")
 
 	if inputFormat == "fullText":
 		#開檔, reference & query
@@ -252,54 +296,17 @@ def main():
 			for s in ifile1:
 				compareStringArray.append(tuple(s.strip().split("\t")))
 
-	vt=None
-	if variantMode:
-		vt=VariantTable(variantCSVFile=variantFileLocation)
-		print("異體字比對：On")
-		print("異體字資料檔案: {} ".format(variantFileLocation))
-	else:
-		print("異體字比對：Off")	
-
-	loop=0
-
 	t0 = datetime.datetime.now()
 
-	alignMessges=[]
-	task_length=len(compareStringArray)
-	while (len(compareStringArray)):
-		if (loop%1000)==0:
-			tnow = datetime.datetime.now()
-			tms=(tnow-t0).microseconds
-			progress = loop/task_length*100
-			speed = (tms)/(loop+1)
-			expTime = speed*(task_length-loop)*0.000001
-			#print("\r開始比對... {:.0f}% ({:.2f} ms/pair) (剩餘時間:{:.2} sec)".format(progress,speed,expTime),end="",flush=True)
-			if (OUTPUT_filename): print("\r開始比對... {:.0f}% ".format(progress),end="",flush=True)
+	#進行資料比較的迴圈
+	alignMessges= run_align_task(
+			compareStringArray,config,messageType,variantMode, 
+			variantFile, print_to_file)
 
-		refID,refString,qryID,qryString = compareStringArray.pop()
-		loop+=1
-		#print("{},".format(loop),end="")
-		# endtime = datetime.datetime.now()
-		# print ("執行完成，花費：{:.6f} 秒".format((endtime-starttime).microseconds*0.000001))
-		rMsg = run_align(
-						refID,refString,qryID,qryString,
-						mScore,varScore,misScore,gapOpen,gapExtend,
-						mssageType, variantTable=vt)
-
-		alignMessges.extend(rMsg)
-		if (not OUTPUT_filename):
-			for m in rMsg:
-				print(m)
 
 	t1= datetime.datetime.now()
 	print ("")
 	print ("執行完成，花費：{} 秒".format((t1-t0).seconds))
-
-	#取得內建 report 字串
-	# r=alignment.alignment_report()
-
-	# #先用簡單作法，讓字元能夠正確對應，之後會修正
-	# r=r.replace("|","｜").replace("*","＊").replace("-","〇")
 
 	if (OUTPUT_filename):
 		print ("結果輸出於：{}".format(OUTPUT_filename))
@@ -307,4 +314,4 @@ def main():
 			ofile.write("\r\n".join(alignMessges))
 
 if __name__ == '__main__':
-    main()  # 或是任何你想執行的函式
+    unissw_main()

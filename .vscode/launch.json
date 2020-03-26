@@ -13,7 +13,7 @@
                 "-c",
                 "config.json",
                 "-t",
-                "batch-data/in/task.json"
+                "batch-data/task.json"
             ],
             "console": "integratedTerminal"
         },

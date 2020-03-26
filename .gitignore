@@ -41,3 +41,4 @@ tests/sentences/T39n1799/009.json
 tests/sentences/T39n1799/010.json
 tests/P185n1618_T39n1799_IDText.tsv
 test-out.tsv
+data/out-t-1-2.tsv

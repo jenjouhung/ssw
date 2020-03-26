@@ -4,6 +4,6 @@
   "match_score": 3,
   "variant_match_score": 2,
   "mismacth_penalty": -3,
-  "with_variant": "On",
+  "with_variant": "True",
   "variant_file": "data/variants.txt"
 }
