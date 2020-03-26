@@ -5,11 +5,21 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug Python: mytest.py",
+            "name": "Python: 目前檔案",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceRoot}/mytest.py",
-            "args": ["-p","test-out.tsv"],
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Debug Python: unissw.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceRoot}/unissw.py",
+            "args": [
+                "-p",
+                "test.tsv"
+            ],
             "console": "integratedTerminal"
         },
         {
@@ -18,8 +28,11 @@
             "request": "launch",
             "stopOnEntry": true,
             "pythonPath": "/usr/bin/python3",
-            "program": "${workspaceRoot}/mytest.py",
-            "args": ["-pv","data/pair1.tsv"],
+            "program": "${workspaceRoot}/unissw.py",
+            "args": [
+                "-pv",
+                "data/pair1.tsv"
+            ],
             "cwd": "",
             "console": "externalTerminal",
             "env": {},
@@ -28,7 +41,8 @@
                 "WaitOnAbnormalExit",
                 "WaitOnNormalExit"
             ]
-        },        { 
+        },
+        {
             "name": "GDB Attach proc 0",
             "type": "cppdbg",
             "request": "attach",

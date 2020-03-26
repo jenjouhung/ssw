@@ -139,119 +139,122 @@ def usage():
 
 
 # main function starts here:
+def main():
+	FILE_PATH=os.path.dirname(__file__)
 
-FILE_PATH=os.path.dirname(__file__)
-
-#重要的流程控制參數，與外來參數有關
-OUTPUT_filename=None
-inputFormat="fullText"  # 選項為：fullText  與 sentencePair
-variantMode = False # Ture/False 控制是否進行異體字比對
-variantFileLocation =os.path.join(FILE_PATH,"data","variants.txt")
-mssageType=1 # 1: 正式輸出, 2: Debug輸出 (可由command line 加上-d 來控制)
-
-
-try:
-	opts, args = getopt.getopt(sys.argv[1:], "dpvo:")
-except getopt.GetoptError as err:
-	# print help information and exit:
-	print(err)  # will print something like "option -a not recognized"
-	usage()
-	sys.exit(2)
-
-#抓取 -o 的選項與值
-for opt,value in opts:
-	if "-o" in opt:
-		OUTPUT_filename = value
-	if "-p" in opt:
-		inputFormat = "sentencePair"
-	if "-v" in opt:
-		variantMode = True
-	if "-d" in opt:
-		mssageType=2
-
-#一般讀檔，需要兩個檔
-#測試始否給定 FILE1 與 FILE2
-if (inputFormat=="fullText" and len(args) !=2) :
-	print ("Please specify FILE1 and FILE2 for comparsion.")
-	usage()
-	sys.exit(2)
-elif (inputFormat=="sentencePair" and len(args) !=1) :
-	print ("Please specify Sentence Pair FILE  for comparsion.")
-	usage()
-	sys.exit(2)
-
-compareStringArray=[]  #紀錄用來比較的Array
-
-if (OUTPUT_filename): print("開始執行比對：")
-
-if inputFormat == "fullText":
-	#開檔, reference & query
-	# 2020/03/09 輸入格式改為：id \tab text
-	with open(args[0],'r') as ifile1, open(args[1],'r') as ifile2:
-		print("資料模式：兩全文檔比對")
-		print("Reading Files：{},{}".format(args[0],args[1]))
-		ref=ifile1.read().strip().split("\t")
-		qry=ifile2.read().strip().split("\t")
-		compareStringArray.append((ref[0],ref[1],qry[0],qry[1]))
-elif inputFormat == "sentencePair":
-	# 2020/03/09 輸入格式改為：id1 \tab text1 \tab id2 \tab text2
-	#開檔，依序讀入需要分割的字串
-	print("Reading File：{}".format(args[0]))
-	print("資料模式：Sentence Pair")
-	with open(args[0],'r') as ifile1:
-		for s in ifile1:
-			compareStringArray.append(tuple(s.strip().split("\t")))
-
-vt=None
-if variantMode:
-	vt=VariantTable(variantCSVFile=variantFileLocation)
-	print("異體字比對：On")
+	#重要的流程控制參數，與外來參數有關
+	OUTPUT_filename=None
+	inputFormat="fullText"  # 選項為：fullText  與 sentencePair
+	variantMode = False # Ture/False 控制是否進行異體字比對
+	variantFileLocation =os.path.join(FILE_PATH,"data","variants.txt")
+	mssageType=1 # 1: 正式輸出, 2: Debug輸出 (可由command line 加上-d 來控制)
 
 
-vt=None
-if variantMode:
-	vt=VariantTable(variantCSVFile=variantFileLocation)
+	try:
+		opts, args = getopt.getopt(sys.argv[1:], "dpvo:")
+	except getopt.GetoptError as err:
+		# print help information and exit:
+		print(err)  # will print something like "option -a not recognized"
+		usage()
+		sys.exit(2)
+
+	#抓取 -o 的選項與值
+	for opt,value in opts:
+		if "-o" in opt:
+			OUTPUT_filename = value
+		if "-p" in opt:
+			inputFormat = "sentencePair"
+		if "-v" in opt:
+			variantMode = True
+		if "-d" in opt:
+			mssageType=2
+
+	#一般讀檔，需要兩個檔
+	#測試始否給定 FILE1 與 FILE2
+	if (inputFormat=="fullText" and len(args) !=2) :
+		print ("Please specify FILE1 and FILE2 for comparsion.")
+		usage()
+		sys.exit(2)
+	elif (inputFormat=="sentencePair" and len(args) !=1) :
+		print ("Please specify Sentence Pair FILE  for comparsion.")
+		usage()
+		sys.exit(2)
+
+	compareStringArray=[]  #紀錄用來比較的Array
+
+	if (OUTPUT_filename): print("開始執行比對：")
+
+	if inputFormat == "fullText":
+		#開檔, reference & query
+		# 2020/03/09 輸入格式改為：id \tab text
+		with open(args[0],'r') as ifile1, open(args[1],'r') as ifile2:
+			print("資料模式：兩全文檔比對")
+			print("Reading Files：{},{}".format(args[0],args[1]))
+			ref=ifile1.read().strip().split("\t")
+			qry=ifile2.read().strip().split("\t")
+			compareStringArray.append((ref[0],ref[1],qry[0],qry[1]))
+	elif inputFormat == "sentencePair":
+		# 2020/03/09 輸入格式改為：id1 \tab text1 \tab id2 \tab text2
+		#開檔，依序讀入需要分割的字串
+		print("Reading File：{}".format(args[0]))
+		print("資料模式：Sentence Pair")
+		with open(args[0],'r') as ifile1:
+			for s in ifile1:
+				compareStringArray.append(tuple(s.strip().split("\t")))
+
+	vt=None
+	if variantMode:
+		vt=VariantTable(variantCSVFile=variantFileLocation)
+		print("異體字比對：On")
 
 
-loop=0
-
-t0 = datetime.datetime.now()
-
-alignMessges=[]
-task_length=len(compareStringArray)
-while (len(compareStringArray)):
-	if (loop%1000)==0:
-		tnow = datetime.datetime.now()
-		tms=(tnow-t0).microseconds
-		progress = loop/task_length*100
-		speed = (tms)/(loop+1)
-		expTime = speed*(task_length-loop)*0.000001
-		#print("\r開始比對... {:.0f}% ({:.2f} ms/pair) (剩餘時間:{:.2} sec)".format(progress,speed,expTime),end="",flush=True)
-		if (OUTPUT_filename): print("\r開始比對... {:.0f}% ".format(progress),end="",flush=True)
-
-	refID,refString,qryID,qryString = compareStringArray.pop()
-	loop+=1
-	#print("{},".format(loop),end="")
-	# endtime = datetime.datetime.now()
-	# print ("執行完成，花費：{:.6f} 秒".format((endtime-starttime).microseconds*0.000001))
-	rMsg = align(refID,refString,qryID,qryString,mssageType,variantTable=vt)
-	alignMessges.extend(rMsg)
-	if (not OUTPUT_filename):
-		for m in rMsg:
-			print(m)
+	vt=None
+	if variantMode:
+		vt=VariantTable(variantCSVFile=variantFileLocation)
 
 
-t1= datetime.datetime.now()
-print ("")
-print ("執行完成，花費：{} 秒".format((t1-t0).seconds))
+	loop=0
 
-#取得內建 report 字串
-# r=alignment.alignment_report()
+	t0 = datetime.datetime.now()
 
-# #先用簡單作法，讓字元能夠正確對應，之後會修正
-# r=r.replace("|","｜").replace("*","＊").replace("-","〇")
+	alignMessges=[]
+	task_length=len(compareStringArray)
+	while (len(compareStringArray)):
+		if (loop%1000)==0:
+			tnow = datetime.datetime.now()
+			tms=(tnow-t0).microseconds
+			progress = loop/task_length*100
+			speed = (tms)/(loop+1)
+			expTime = speed*(task_length-loop)*0.000001
+			#print("\r開始比對... {:.0f}% ({:.2f} ms/pair) (剩餘時間:{:.2} sec)".format(progress,speed,expTime),end="",flush=True)
+			if (OUTPUT_filename): print("\r開始比對... {:.0f}% ".format(progress),end="",flush=True)
 
-if (OUTPUT_filename):
-	print ("結果輸出於：{}".format(OUTPUT_filename))
-	with open(OUTPUT_filename,'w') as ofile:
-		ofile.write("\r\n".join(alignMessges))
+		refID,refString,qryID,qryString = compareStringArray.pop()
+		loop+=1
+		#print("{},".format(loop),end="")
+		# endtime = datetime.datetime.now()
+		# print ("執行完成，花費：{:.6f} 秒".format((endtime-starttime).microseconds*0.000001))
+		rMsg = align(refID,refString,qryID,qryString,mssageType,variantTable=vt)
+		alignMessges.extend(rMsg)
+		if (not OUTPUT_filename):
+			for m in rMsg:
+				print(m)
+
+
+	t1= datetime.datetime.now()
+	print ("")
+	print ("執行完成，花費：{} 秒".format((t1-t0).seconds))
+
+	#取得內建 report 字串
+	# r=alignment.alignment_report()
+
+	# #先用簡單作法，讓字元能夠正確對應，之後會修正
+	# r=r.replace("|","｜").replace("*","＊").replace("-","〇")
+
+	if (OUTPUT_filename):
+		print ("結果輸出於：{}".format(OUTPUT_filename))
+		with open(OUTPUT_filename,'w') as ofile:
+			ofile.write("\r\n".join(alignMessges))
+
+if __name__ == '__main__':
+    main()  # 或是任何你想執行的函式
