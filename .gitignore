@@ -42,3 +42,12 @@ tests/sentences/T39n1799/010.json
 tests/P185n1618_T39n1799_IDText.tsv
 test-out.tsv
 data/out-t-1-2.tsv
+cbdata-case/*
+batch-data/*
+a.txt
+a1.txt
+a.txt
+a1.xlsx
+a.txt
+config.json
+config.json
