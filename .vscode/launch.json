@@ -27,7 +27,6 @@
                 "-c",
                 "config.json",
                 "data/pair1.tsv"
-
             ],
             "console": "integratedTerminal"
         },
@@ -39,8 +38,10 @@
             "pythonPath": "/usr/bin/python3",
             "program": "${workspaceRoot}/unissw.py",
             "args": [
-                "-pv",
-                "data/pair1.tsv"
+                "-c",
+                "config.json",
+                "-t", 
+                "batch-data/task.json"
             ],
             "cwd": "",
             "console": "externalTerminal",

@@ -189,13 +189,14 @@ def run_align_task(
 	task_length=len(pairs)
 	while (len(pairs)):
 		if (loop%1000)==0:
-			tnow = datetime.datetime.now()
 			# tms=(tnow-t0).microseconds
 			progress = loop/task_length*100
 			# speed = (tms)/(loop+1)
 			# expTime = speed*(task_length-loop)*0.000001
 			#print("\r開始比對... {:.0f}% ({:.2f} ms/pair) (剩餘時間:{:.2} sec)".format(progress,speed,expTime),end="",flush=True)
 			if (print_to_file): print("\r開始比對... {:.0f}% ".format(progress),end="",flush=True)
+		
+		t0 = datetime.datetime.now()
 
 		refID,refString,qryID,qryString = pairs.pop()
 		loop+=1
@@ -206,6 +207,11 @@ def run_align_task(
 						refID,refString,qryID,qryString,
 						mScore,varScore,misScore,gapOpen,gapExtend,
 						messageType, variantTable=vt)
+
+		t1 = datetime.datetime.now()
+
+		# print("[{},({}),{},({})],{:.6f},seconds".format(
+			# refID,len(refString), qryID,len(qryString),(t1-t0).microseconds*0.000001))
 
 		alignMessges.extend(rMsg)
 		if (not print_to_file):
@@ -230,7 +236,7 @@ def read_config (config_file):
 def unissw_main():
 
 	def usage():
-		print("usage: mytest.py [-o output FILE ] [-c config FILE ][-dpv] FILE1 [FILE2] ")
+		print("usage: unissw.py [-o output FILE ] [-c config FILE ][-dpv] FILE1 [FILE2] ")
 
 	FILE_PATH=os.path.dirname(__file__)
 	config_file="config.json"
@@ -241,6 +247,7 @@ def unissw_main():
 	variantMode = False # Ture/False 控制是否進行異體字比對
 	variantFile =os.path.join(FILE_PATH,"data","variants.txt")
 	messageType=1 # 1: 正式輸出, 2: Debug輸出 (可由command line 加上-d 來控制)
+	logMessages = []
 
 	try:
 		opts, args = getopt.getopt(sys.argv[1:], "dpvo:c:")
@@ -279,22 +286,29 @@ def unissw_main():
 	print_to_file = True if OUTPUT_filename else False
 
 
-	if (print_to_file): print("開始執行比對：")
+	if (print_to_file): 
+			msg = "開始執行比對："
+			print(msg)
+			logMessages.append(msg)
 
 	if inputFormat == "fullText":
 		#開檔, reference & query
 		# 2020/03/09 輸入格式改為：id \tab text
 		with open(args[0],'r') as ifile1, open(args[1],'r') as ifile2:
-			print("資料模式：兩全文檔比對")
-			print("Reading Files：{},{}".format(args[0],args[1]))
+			logMessages.append("資料模式：兩全文檔比對")
+			logMessages.append("Reading Files：{},{}".format(args[0],args[1]))
+			print("\n".join(logMessages[-2:]))
+
 			ref=ifile1.read().strip().split("\t")
 			qry=ifile2.read().strip().split("\t")
 			compareStringArray.append((ref[0],ref[1],qry[0],qry[1]))
 	elif inputFormat == "sentencePair":
 		# 2020/03/09 輸入格式改為：id1 \tab text1 \tab id2 \tab text2
 		#開檔，依序讀入需要分割的字串
-		print("Reading File：{}".format(args[0]))
-		print("資料模式：Sentence Pair")
+		logMessages.append("資料模式：Sentence Pair")
+		logMessages.append("Reading File：{}".format(args[0]))
+		print("\n".join(logMessages[-2:]))
+
 		with open(args[0],'r') as ifile1:
 			for s in ifile1:
 				compareStringArray.append(tuple(s.strip().split("\t")))
@@ -308,13 +322,23 @@ def unissw_main():
 
 
 	t1= datetime.datetime.now()
-	print ("")
-	print ("執行完成，花費：{} 秒".format((t1-t0).seconds))
+
+	logMessages.append("")
+	logMessages.append("執行完成，花費：{} 秒".format((t1-t0).seconds))
+	print("\n".join(logMessages[-2:]))
 
 	if (OUTPUT_filename):
-		print ("結果輸出於：{}".format(OUTPUT_filename))
+		logMessages.append("結果輸出於：{}".format(OUTPUT_filename))
+		print("\n".join(logMessages[-1]))
 		with open(OUTPUT_filename,'w') as ofile:
 			ofile.write("\r\n".join(alignMessges))
+
+	if ("log_file" in config):
+		print("log輸出於：{}".format(config["log_file"]))
+		with open(os.path.join(".",config["log_file"]),"w") as logfile:
+			logfile.write("\r\n".join(logMessages))
+
+
 
 if __name__ == '__main__':
     unissw_main()

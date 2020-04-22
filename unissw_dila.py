@@ -11,6 +11,7 @@ def usage():
 def process_task_record(tr):
     r =[]
     output_file=None
+    logMessages=[]
 
     #檢查 file_base 設定
     file_base=os.path.dirname(__file__)
@@ -27,8 +28,10 @@ def process_task_record(tr):
 
         pair_file = os.path.join(file_base,  tr["pair_file"])
 
-        print("Reading File：{}".format(pair_file))
-        print("資料模式：Sentence Pair")
+        logMessages.append("資料模式：Sentence Pair")
+        logMessages.append("Reading File：{}".format(pair_file))
+        print("\n".join(logMessages[-2:]))
+
         with open(pair_file,'r') as ifile1:
             for s in ifile1:
                 # 內容格式為：id1 \tab text1 \tab id2 \tab text2
@@ -40,7 +43,9 @@ def process_task_record(tr):
         if not ("sent_file1" in tr ):  raise SystemExit("Error: 12 Task FILE ERROR: must set sent_file1 when data_type set to s. \n Occucrs in{}".format(tr))
         if not ("sent_file2" in tr ): raise SystemExit("Error: 13 Task FILE ERROR: must set sent_file2 when data_type set to s. \n Occucrs in{}".format(tr))
 
-        print("資料模式：pair, sentence 分離模式")
+        logMessages.append("資料模式：pair, sentence 分離模式")
+        print(logMessages[-1])
+
         sent_file1 = os.path.join(file_base,  tr["sent_file1"])
         sent_file2 = os.path.join(file_base,  tr["sent_file2"])
         pair_file = os.path.join(file_base,  tr["pair_file"])
@@ -48,12 +53,14 @@ def process_task_record(tr):
         sent_dict={}
 
         with open(sent_file1,'r') as sfile1, open(sent_file2,'r') as sfile2, open(pair_file,'r') as pfile:
-            print("讀取資料檔：{}".format(sent_file1))
+            logMessages.append("讀取資料檔：{}".format(sent_file1))
             s1 = dict([ (line.strip().split("\t")) for line in sfile1])
 
-            print("讀取資料檔：{}".format(sent_file2))
+            logMessages.append("讀取資料檔：{}".format(sent_file2))
             s2 = dict([ (line.strip().split("\t")) for line in sfile2])
             sent_dict  = {**s1, **s2}  # 合併s1, s2
+
+            print("\n".join(logMessages[-2:]))
 
             plines = [line.strip().split("\t") for line in pfile]
 
@@ -67,8 +74,10 @@ def process_task_record(tr):
         sent_file2 = os.path.join(file_base,  tr["sent_file2"])
 
         with open(sent_file1,'r') as ifile1, open(sent_file2,'r') as ifile2:
-            print("資料模式：兩全文檔比對")
-            print("Reading Files：\n [1] {} \n [2] {}".format(sent_file1,sent_file2))
+            logMessages.append("資料模式：兩全文檔比對")
+            logMessages.append("Reading Files：\n [1] {} \n [2] {}".format(sent_file1,sent_file2))
+            print("\n".join(logMessages[-2:]))
+
             ref=ifile1.read().strip().split("\t")
             qry=ifile2.read().strip().split("\t")
             r.append((ref[0],ref[1],qry[0],qry[1]))
@@ -76,7 +85,7 @@ def process_task_record(tr):
     else:
         raise SystemExit("Error: 1X unsupported data type:{}. \n Occucrs in{}".format(tr["data_type"],tr))
 
-    return output_file,r
+    return output_file,r,logMessages
 
 
 def unissw_dila_main():
@@ -91,6 +100,7 @@ def unissw_dila_main():
     config_file=os.path.join(FILE_PATH,"config.json")
     messageType=1 # 1: 正式輸出, 2: Debug輸出 (可由command line 加上-d 來控制)
     compareStringArray=[]  #紀錄用來的字串的Array
+    logMessages = []
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "t:c:")
@@ -120,13 +130,16 @@ def unissw_dila_main():
         tasks = json.load(tfile)
 
     for t in tasks:
-        OUTPUT_filename,compareStringArray= process_task_record(t)
+        OUTPUT_filename,compareStringArray,lmsg= process_task_record(t)
+        logMessages.extend(lmsg)
         print_to_file = True if OUTPUT_filename else False
 
         if len(compareStringArray)==0:
             continue
     
-        if (print_to_file): print("開始執行比對：")
+        if (print_to_file): 
+            logMessages.append("開始執行比對：")
+            print(logMessages[-1])
 
         t0 = datetime.datetime.now()
 
@@ -136,14 +149,20 @@ def unissw_dila_main():
 
         t1= datetime.datetime.now()
 
-        print ("\n執行完成，花費：{} 秒".format((t1-t0).seconds))
+        logMessages.append("\n執行完成，花費：{} 秒".format((t1-t0).seconds))
+        print(logMessages[-1])
 
         if (OUTPUT_filename):
-            print ("結果輸出於：{}".format(OUTPUT_filename))
+            logMessages.append("結果輸出於：{}".format(OUTPUT_filename))
             with open(OUTPUT_filename,'w') as ofile:
                 ofile.write("\r\n".join(alignMessges))
-            print("-"*60)
+            logMessages.append("-"*60)
+            print("\n".join(logMessages[-2:]))
 
+    if ("log_file" in config):
+        print("log輸出於：{}".format(config["log_file"]))
+        with open(os.path.join(".",config["log_file"]),"w") as logfile:
+            logfile.write("\r\n".join(logMessages))
 
 
 if __name__ == '__main__':
