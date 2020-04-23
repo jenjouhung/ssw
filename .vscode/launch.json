@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        
         {
             "name": "Python: unissw_dila",
             "type": "python",
@@ -26,7 +27,7 @@
                 "-pd",
                 "-c",
                 "config.json",
-                "data/pair1.tsv"
+                "data/pcase.tsv"
             ],
             "console": "integratedTerminal"
         },
@@ -37,12 +38,7 @@
             "stopOnEntry": true,
             "pythonPath": "/usr/bin/python3",
             "program": "${workspaceRoot}/unissw.py",
-            "args": [
-                "-c",
-                "config.json",
-                "-t", 
-                "batch-data/task.json"
-            ],
+            "args": ["-pv","data/pair1.tsv"],
             "cwd": "",
             "console": "externalTerminal",
             "env": {},

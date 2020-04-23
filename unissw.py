@@ -199,15 +199,15 @@ def run_align_task(
 		#print("{},".format(loop),end="")
 		# endtime = datetime.datetime.now()
 		# print ("執行完成，花費：{:.6f} 秒".format((endtime-starttime).microseconds*0.000001))
+
+		# print("比對：[{},({}) vs {},({})]".format(refID,refString[:10], qryID,qryString[:10]))
+
 		rMsg = align_strings(
 						refID,refString,qryID,qryString,
 						mScore,varScore,misScore,gapOpen,gapExtend,
 						messageType, variantTable=vt)
 
 		t1 = datetime.datetime.now()
-
-		# print("[{},({}),{},({})],{:.6f},seconds".format(
-			# refID,len(refString), qryID,len(qryString),(t1-t0).microseconds*0.000001))
 
 		alignMessges.extend(rMsg)
 		if (not print_to_file):
@@ -310,6 +310,14 @@ def unissw_main():
 				compareStringArray.append(tuple(s.strip().split("\t")))
 
 	t0 = datetime.datetime.now()
+
+	if ("with_variant" in config and config["with_variant"]=="True"):
+		variantMode = True # Ture/False 控制是否進行異體字比對
+
+	if ("variant_file" in config and config["variant_file"]):
+		variantFileLocation =config["variant_file"]
+	else:
+		variantFileLocation =""
 
 	if variantMode:
 		logMessages.append("異體字比對：On  (異體字資料檔案: {})".format(variantFileLocation))

@@ -601,13 +601,13 @@ static cigar* banded_sw (const int16_t* ref,
 				 const int16_t* read,
 				 int32_t refLen,
 				 int32_t readLen,
-				 int32_t score,
+				 uint16_t* score_p,
 				 const uint32_t weight_gapO,  /* will be used as - */
 				 const uint32_t weight_gapE,  /* will be used as - */
 				 int32_t band_width,
 				 const int8_t* mat,	/* pointer to the weight matrix */
 				 int32_t n) {
-
+	uint16_t score = *(score_p);
 	uint32_t *c = (uint32_t*)malloc(16 * sizeof(uint32_t)), *c1;
 	int32_t i, j, e, f, temp1, temp2, s = 16, s1 = 8, l, max = 0;
 	int64_t s2 = 1024;
@@ -680,6 +680,12 @@ static cigar* banded_sw (const int16_t* ref,
 			for (j = 1; j <= u; j ++) h_b[j] = h_c[j];
 		}
 		band_width *= 2;
+		//Modfied by Joey 2020.04.13. simply to prevent when max never equals to score, and make whole progarm crash
+		int32_t maxRR=(readLen > refLen ) ? readLen : refLen;
+		if (band_width >= 2*maxRR){
+			*(score_p) = max; //順便把分數丟回去修正
+			break;
+		}
 	} while (LIKELY(max < score));
 	band_width /= 2;
 
@@ -917,7 +923,7 @@ s_align* ssw_align (const s_profile* prof,
 	refLen = r->ref_end1 - r->ref_begin1 + 1;
 	readLen = r->read_end1 - r->read_begin1 + 1;
 	band_width = abs(refLen - readLen) + 1;
-	path = banded_sw(ref + r->ref_begin1, prof->read + r->read_begin1, refLen, readLen, r->score1, weight_gapO, weight_gapE, band_width, prof->mat, prof->n);
+	path = banded_sw(ref + r->ref_begin1, prof->read + r->read_begin1, refLen, readLen, &(r->score1), weight_gapO, weight_gapE, band_width, prof->mat, prof->n);
 	if (path == 0) {
 		free(r);
 		r = NULL;

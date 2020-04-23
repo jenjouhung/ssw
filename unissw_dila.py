@@ -175,8 +175,5 @@ def unissw_dila_main():
         logfile.close() 
 
 
-            
-
-
 if __name__ == '__main__':
     unissw_dila_main()
