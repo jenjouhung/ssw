@@ -63,7 +63,8 @@ I have move few impoartant setting out from my code. Now you can revise the conf
   "variant_match_score": 2,
   "mismacth_penalty": -3,
   "with_variant": "True"
-  "variant_file": "data/variants.txt"
+  "variant_file": "data/variants.txt",
+  "log_file": "batch-data/out/log.txt"
 }
 ```
 All of them are optional, and above value equals the defualt values in the unissw program.
@@ -93,6 +94,7 @@ In task.json, you can specify how to run multiple comapare tasks. Here is an exa
 ```
 [
   {
+    "task_id":1,    
     "data_folder": "/data/5_GitArea/ssw/batch-data",
     "data_type": "s",
     "sent_file1":"in/a-sentences.tsv",     /* required  */
