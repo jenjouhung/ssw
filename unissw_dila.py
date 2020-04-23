@@ -21,6 +21,9 @@ def process_task_record(tr):
     #檢查 output_file 設定
     if ("output_file" in tr):
         output_file = os.path.join(file_base,  tr["output_file"])
+    if "task_id" in tr:
+        logMessages.append("Task-ID: {}".format(tr["task_id"]))
+        print(logMessages[-1])
 
     #  開始進行各 task record 細節比對
     if (tr["data_type"] =="p"):  # (P)air Mode, pair 檔案內含比對文字
@@ -100,7 +103,6 @@ def unissw_dila_main():
     config_file=os.path.join(FILE_PATH,"config.json")
     messageType=1 # 1: 正式輸出, 2: Debug輸出 (可由command line 加上-d 來控制)
     compareStringArray=[]  #紀錄用來的字串的Array
-    logMessages = []
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "t:c:")
@@ -129,17 +131,22 @@ def unissw_dila_main():
     with open(task_file,"r") as tfile:
         tasks = json.load(tfile)
 
-    for t in tasks:
-        OUTPUT_filename,compareStringArray,lmsg= process_task_record(t)
-        logMessages.extend(lmsg)
+    logfile = None
+    if ("log_file" in config):
+        print("log將輸出於：{}".format(config["log_file"]))
+        logfile = open(os.path.join(".",config["log_file"]),"w")
+
+
+    for i,t in enumerate(tasks):
+        print("開始進行Task:  {}/{}".format(i+1,len(tasks)))
+        OUTPUT_filename,compareStringArray,logMessages= process_task_record(t)
         print_to_file = True if OUTPUT_filename else False
 
         if len(compareStringArray)==0:
             continue
     
-        if (print_to_file): 
-            logMessages.append("開始執行比對：")
-            print(logMessages[-1])
+        # if (print_to_file): 
+        #     print("開始執行比對：")
 
         t0 = datetime.datetime.now()
 
@@ -153,16 +160,22 @@ def unissw_dila_main():
         print(logMessages[-1])
 
         if (OUTPUT_filename):
-            logMessages.append("結果輸出於：{}".format(OUTPUT_filename))
+            logMessages.append("結果輸出於：{}, 共{}筆".format(OUTPUT_filename,len(alignMessges)))
             with open(OUTPUT_filename,'w') as ofile:
                 ofile.write("\r\n".join(alignMessges))
             logMessages.append("-"*60)
             print("\n".join(logMessages[-2:]))
-
-    if ("log_file" in config):
-        print("log輸出於：{}".format(config["log_file"]))
-        with open(os.path.join(".",config["log_file"]),"w") as logfile:
+        
+        if (logfile):
             logfile.write("\r\n".join(logMessages))
+            logfile.write("\r\n")
+            logfile.flush()
+
+    if (logfile):
+        logfile.close() 
+
+
+            
 
 
 if __name__ == '__main__':

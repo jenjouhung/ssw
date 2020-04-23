@@ -177,10 +177,6 @@ def run_align_task(
 	vt=None
 	if variantMode:
 		vt=VariantTable(variantCSVFile=variantFileLocation)
-		print("異體字比對：On")
-		print("異體字資料檔案: {} ".format(variantFileLocation))
-	else:
-		print("異體字比對：Off")
 
 	loop=0
 
@@ -314,6 +310,13 @@ def unissw_main():
 				compareStringArray.append(tuple(s.strip().split("\t")))
 
 	t0 = datetime.datetime.now()
+
+	if variantMode:
+		logMessages.append("異體字比對：On  (異體字資料檔案: {})".format(variantFileLocation))
+	else:
+		logMessages.append("異體字比對：Off")
+
+	print(logMessages[-1])
 
 	#進行資料比較的迴圈
 	alignMessges= run_align_task(
