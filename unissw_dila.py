@@ -184,11 +184,20 @@ def unissw_dila_main():
 
     t0 = datetime.datetime.now()
 
-        # alignMessges= run_align_task(,
-        # config,messageType,variantMode, variantFile, )
+    #準備工作項目
     taskObjList = [TaskObj(config,messageType,variantMode, variantFile,t) for t in task_json]
-    for taskobj in taskObjList:
-        processTask(taskobj)
+
+    # 進行多工設定
+    if ("num_of_max_process" in config):
+        pool = Pool(config["num_of_max_process"]) # Pool() 不放參數則默認使用電腦核的數量
+    else:
+        pool = Pool(1)
+
+    #進行多工處理
+    pool.map(processTask,taskObjList) 
+   
+    # for taskobj in taskObjList:
+    #     processTask(taskobj)
 
     t = datetime.datetime.now()
     print("執行完成，全部花費：{} 秒".format((t-t0).seconds))

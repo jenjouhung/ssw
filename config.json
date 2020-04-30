@@ -6,5 +6,6 @@
   "mismacth_penalty": -3,
   "with_variant": "True",
   "variant_file": "data/variants.txt",
-  "log_file": "batch-data/out/log.txt"
+  "log_file": "batch-data/out/log.txt",
+  "num_of_max_process": 1
 }
