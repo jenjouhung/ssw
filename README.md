@@ -64,7 +64,8 @@ I have move few impoartant setting out from my code. Now you can revise the conf
   "mismacth_penalty": -3,
   "with_variant": "True"
   "variant_file": "data/variants.txt",
-  "log_file": "batch-data/out/log.txt"
+  "log_file": "batch-data/out/log.txt",
+  "num_of_max_process": 1
 }
 ```
 All of them are optional, and above value equals the defualt values in the unissw program.
@@ -86,6 +87,7 @@ python3 unissw_dila.py -c config.json -t batch-data/task.json
 ```
 if you didn't specify by -c, the system will read config.json in package root by default.
 
+This library supports mutiprocess now, just set "num_of_max_process" in the config file.
 
 ## task.json
 
