@@ -3,6 +3,15 @@ from unissw import *
 import sys,getopt
 import os
 import json
+from multiprocessing import Pool 
+
+class TaskObj():
+    def __init__(self,config,messageType,variantMode, variantFile,task):
+        self.config = config
+        self.messageType = messageType
+        self.variantMode = variantMode
+        self.variantFile = variantFile
+        self.task = task
 
 def usage():
 	print("usage: python3 unissw_dila.py  [-c config FILE] -t task FILE")
@@ -91,6 +100,42 @@ def process_task_record(tr):
     return output_file,r,logMessages
 
 
+#多共用Task 處理函式
+def processTask(taskobj):
+        #print("開始進行Task:  {}/{}".format(i+1,len(tasks)))
+        OUTPUT_filename,compareStringArray,logMessages= process_task_record(taskobj.task)
+        print_to_file = True if OUTPUT_filename else False
+
+        if len(compareStringArray)==0:
+            return
+    
+        # if (print_to_file): 
+        #     print("開始執行比對：")
+
+        t1 = datetime.datetime.now()
+
+        #進行資料比較
+        alignMessges= run_align_task(compareStringArray,taskobj.config,
+                                taskobj.messageType,taskobj.variantMode, taskobj.variantFile, print_to_file)
+
+        t2= datetime.datetime.now()
+
+        logMessages.append("\n執行完成，花費：{} 秒".format((t2-t1).seconds))
+        print(logMessages[-1])
+
+        if (OUTPUT_filename):
+            logMessages.append("結果輸出於：{}, 共{}筆".format(OUTPUT_filename,len(alignMessges)))
+            with open(OUTPUT_filename,'w') as ofile:
+                ofile.write("\r\n".join(alignMessges))
+            logMessages.append("-"*60)
+            print("\n".join(logMessages[-2:]))
+        
+        if ("log_file" in taskobj.config):
+            logfile = open(os.path.join(".",taskobj.config["log_file"]),"a")
+            logfile.write("\r\n".join(logMessages))
+            logfile.write("\r\n")
+            logfile.close()
+
 def unissw_dila_main():
     FILE_PATH=os.path.dirname(__file__)
     task_file=None
@@ -126,54 +171,27 @@ def unissw_dila_main():
     #讀入 config檔
     config=read_config(config_file)
 
-    #讀入 task檔
-    tasks=[]
+    #讀入 task.json檔
+    task_json=[]
     with open(task_file,"r") as tfile:
-        tasks = json.load(tfile)
+        task_json = json.load(tfile)
 
     logfile = None
     if ("log_file" in config):
         print("log將輸出於：{}".format(config["log_file"]))
         logfile = open(os.path.join(".",config["log_file"]),"w")
+        logfile.close()
 
+    t0 = datetime.datetime.now()
 
-    for i,t in enumerate(tasks):
-        print("開始進行Task:  {}/{}".format(i+1,len(tasks)))
-        OUTPUT_filename,compareStringArray,logMessages= process_task_record(t)
-        print_to_file = True if OUTPUT_filename else False
+        # alignMessges= run_align_task(,
+        # config,messageType,variantMode, variantFile, )
+    taskObjList = [TaskObj(config,messageType,variantMode, variantFile,t) for t in task_json]
+    for taskobj in taskObjList:
+        processTask(taskobj)
 
-        if len(compareStringArray)==0:
-            continue
-    
-        # if (print_to_file): 
-        #     print("開始執行比對：")
-
-        t0 = datetime.datetime.now()
-
-        #進行資料比較
-        alignMessges= run_align_task(compareStringArray,config,
-                                messageType,variantMode, variantFile, print_to_file)
-
-        t1= datetime.datetime.now()
-
-        logMessages.append("\n執行完成，花費：{} 秒".format((t1-t0).seconds))
-        print(logMessages[-1])
-
-        if (OUTPUT_filename):
-            logMessages.append("結果輸出於：{}, 共{}筆".format(OUTPUT_filename,len(alignMessges)))
-            with open(OUTPUT_filename,'w') as ofile:
-                ofile.write("\r\n".join(alignMessges))
-            logMessages.append("-"*60)
-            print("\n".join(logMessages[-2:]))
-        
-        if (logfile):
-            logfile.write("\r\n".join(logMessages))
-            logfile.write("\r\n")
-            logfile.flush()
-
-    if (logfile):
-        logfile.close() 
-
+    t = datetime.datetime.now()
+    print("執行完成，全部花費：{} 秒".format((t-t0).seconds))
 
 if __name__ == '__main__':
     unissw_dila_main()
