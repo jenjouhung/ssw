@@ -191,7 +191,7 @@ def unissw_dila_main():
     if ("num_of_max_process" in config):
         pool = Pool(config["num_of_max_process"]) # Pool() 不放參數則默認使用電腦核的數量
     else:
-        pool = Pool(1)
+        pool = Pool()
 
     #進行多工處理
     pool.map(processTask,taskObjList) 
