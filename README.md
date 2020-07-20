@@ -66,6 +66,7 @@ I have move few impoartant setting out from my code. Now you can revise the conf
   "variant_file": "data/variants.txt",
   "log_file": "batch-data/out/log.txt",
   "num_of_max_process": 1
+  "common_char_count_th":-1
 }
 ```
 All of them are optional, and above value equals the defualt values in the unissw program.
@@ -89,6 +90,9 @@ if you didn't specify by -c, the system will read config.json in package root by
 
 This library supports mutiprocess now, just set "num_of_max_process" in the config file.
 
+"threadhold_of_common_char_count" is used to decide whether two sentences will be included in ssw comparsion or not. The paramater works only with batch mode with datatype s+, otherwise the paramter will be ingored.
+
+
 ## task.json
 
 In task.json, you can specify how to run multiple comapare tasks. Here is an example.
@@ -105,6 +109,14 @@ In task.json, you can specify how to run multiple comapare tasks. Here is an exa
     "output_file":  "out/out-s-a-b.tsv"
   },
   {
+    "data_folder": "/data/5_GitArea/ssw/batch-data",
+    "data_type": "sc",
+    "sent_file1":"in/sent-file1_withCCC.tsv",
+    "sent_file2":"in/sent-file2_withCCC.tsv",
+    "pair_file": "in/pair-file_withCCC.tsv",
+    "output_file":  "out/out-s-a-b-CCC.tsv"
+  },
+  {
     "data_folder": "/data/5_GitArea/ssw/data",
     "data_type": "p",               
     "pair_file": "pair1.tsv",           /* required  */
@@ -118,7 +130,7 @@ In task.json, you can specify how to run multiple comapare tasks. Here is an exa
   }
 ]
 ```
-The example consists of three tasks of all three possible runing types with unissw and unissw dila. That are: data_type set to "s"(seperate mode),"p" (pair mode), and "t" (two text modes).
+The example consists of three tasks of all three possible runing types with unissw and unissw dila. That are: data_type set to "s"(seperate mode),"s+" (seperate mode with common character count), "p" (pair mode), and "t" (two text modes).
 
 ## Overview
 

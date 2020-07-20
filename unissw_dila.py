@@ -17,7 +17,7 @@ def usage():
 	print("usage: python3 unissw_dila.py  [-c config FILE] -t task FILE")
 
 
-def process_task_record(tr):
+def process_task_record(tr,config):
     r =[]
     output_file=None
     logMessages=[]
@@ -49,13 +49,20 @@ def process_task_record(tr):
                 # 內容格式為：id1 \tab text1 \tab id2 \tab text2
                 r.append(tuple(s.strip().split("\t")))
 
-    elif (tr["data_type"] =="s"):  #  (S)eperate mode: id, sentence 分開檔案儲存
+    elif (tr["data_type"] =="s" or tr["data_type"] =="sc"):  #  (S)eperate mode: id, sentence 分開檔案儲存
+
+        CCCTH = -1 #common_char_count_th
 
         if not ("pair_file" in tr ):  raise SystemExit("Error: 11 Task FILE ERROR: must set pair_file when data_type set to s. \n Occucrs in{}".format(tr))
         if not ("sent_file1" in tr ):  raise SystemExit("Error: 12 Task FILE ERROR: must set sent_file1 when data_type set to s. \n Occucrs in{}".format(tr))
         if not ("sent_file2" in tr ): raise SystemExit("Error: 13 Task FILE ERROR: must set sent_file2 when data_type set to s. \n Occucrs in{}".format(tr))
 
-        logMessages.append("資料模式：pair, sentence 分離模式")
+        if tr["data_type"] =="s":
+            logMessages.append("資料模式：pair, sentence 分離模式")
+
+        if tr["data_type"] =="sc":
+            logMessages.append("資料模式：pair, sentence 分離模式 (有common character count)")
+
         print(logMessages[-1])
 
         sent_file1 = os.path.join(file_base,  tr["sent_file1"])
@@ -76,7 +83,20 @@ def process_task_record(tr):
 
             plines = [line.strip().split("\t") for line in pfile]
 
-            r = [(sid1,sent_dict[sid1],sid2,sent_dict[sid2]) for sid1, sid2 in plines]
+            if tr["data_type"] =="s":
+                r = [(sid1,sent_dict[sid1],sid2,sent_dict[sid2]) for sid1, sid2  in plines]
+            elif tr["data_type"] =="sc":
+                if "common_char_count_th" in config:
+                    CCCTH = int(config["common_char_count_th"])
+                    logMessages.append("啟用：common_char_count_th 設定：{}".format(CCCTH))
+                else:
+                    logMessages.append("找不到 common_char_count_th 設定，使用預設值：{}".format(CCCTH))
+                print(logMessages[-1])
+
+                r = [(sid1,sent_dict[sid1],sid2,sent_dict[sid2]) for sid1, sid2, ccc in plines if int(ccc)>=CCCTH]
+
+            print("共有{}筆 pair 資料".format(len(r)))
+
 
     elif (tr["data_type"] =="t"):  # (T)wo texts mode: 兩個文字檔，各自內含一句。
         if not ("sent_file1" in tr ): raise SystemExit("Error: 12 Task FILE ERROR: must set sent_file1 when data_type set to t. \n Occucrs in{}".format(tr))
@@ -103,7 +123,7 @@ def process_task_record(tr):
 #多共用Task 處理函式
 def processTask(taskobj):
         #print("開始進行Task:  {}/{}".format(i+1,len(tasks)))
-        OUTPUT_filename,compareStringArray,logMessages= process_task_record(taskobj.task)
+        OUTPUT_filename,compareStringArray,logMessages= process_task_record(taskobj.task, taskobj.config)
         print_to_file = True if OUTPUT_filename else False
 
         if len(compareStringArray)==0:
