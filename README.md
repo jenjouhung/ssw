@@ -130,7 +130,7 @@ In task.json, you can specify how to run multiple comapare tasks. Here is an exa
   }
 ]
 ```
-The example consists of three tasks of all three possible runing types with unissw and unissw dila. That are: data_type set to "s"(seperate mode),"s+" (seperate mode with common character count), "p" (pair mode), and "t" (two text modes).
+The example consists of three tasks of all three possible runing types with unissw and unissw dila. That are: data_type set to "s"(seperate mode),"sc" (seperate mode with common character count), "p" (pair mode), and "t" (two text modes).
 
 ## Overview
 
