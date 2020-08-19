@@ -4,7 +4,7 @@
   "match_score": 3,
   "variant_match_score": 2,
   "mismacth_penalty": -3,
-  "with_variant": "True",
+  "with_variant": "False",
   "variant_file": "data/variants.txt",
   "log_file": "batch-data/out/log.txt",
   "log_message_level": 2,
