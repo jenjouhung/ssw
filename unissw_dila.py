@@ -30,13 +30,16 @@ def process_task_record(tr,config, logLevel=3):
     if ("data_folder" in tr):
         file_base = tr["data_folder"]
 
+    #Task ID 設定
+    trid = tr["task_id"] if "task_id" in tr else "Unknown"
+
     #檢查 output_file 設定
     if ("output_file" in tr):
         output_file = os.path.join(file_base,  tr["output_file"])
-    if "task_id" in tr:
-        if logLevel>=1:
-            logMessages.append("Task-ID: {}".format(tr["task_id"]))
-            print(logMessages[-1])
+
+    if logLevel>=1:
+        logMessages.append("[#TID:{}][#TaskStart]".format(trid))
+        # print(logMessages[-1])
 
     #  開始進行各 task record 細節比對
     if (tr["data_type"] =="p"):  # (P)air Mode, pair 檔案內含比對文字
@@ -45,8 +48,8 @@ def process_task_record(tr,config, logLevel=3):
         pair_file = os.path.join(file_base,  tr["pair_file"])
         
         if logLevel>=2:
-            logMessages.append("資料模式：Sentence Pair")
-            logMessages.append("Reading File：{}".format(pair_file))
+            logMessages.append("[#TID:{}][#DataMode]資料模式：Sentence Pair".format(trid))
+            logMessages.append("[#TID:{}][#PairFILE]Reading File：{}".format(trid,pair_file))
             if logLevel>=3:            
                 print("\n".join(logMessages[-2:]))
 
@@ -64,10 +67,10 @@ def process_task_record(tr,config, logLevel=3):
         if not ("sent_file2" in tr ): raise SystemExit("Error: 13 Task FILE ERROR: must set sent_file2 when data_type set to s. \n Occucrs in{}".format(tr))
 
         if tr["data_type"] =="s":
-            if logLevel>=2: logMessages.append("資料模式：pair, sentence 分離模式")
+            if logLevel>=2: logMessages.append("[#TID:{}][#DataMode]資料模式：pair, sentence 分離模式".format(trid))
 
         if tr["data_type"] =="sc":
-            if logLevel>=2: logMessages.append("資料模式：pair, sentence 分離模式 (有common character count)")
+            if logLevel>=2: logMessages.append("[#TID:{}][#DataMode]資料模式：pair, sentence 分離模式 (有common character count)".format(trid))
 
         if logLevel>=3: 
             print(logMessages[-1])
@@ -79,10 +82,10 @@ def process_task_record(tr,config, logLevel=3):
         sent_dict={}
 
         with open(sent_file1,'r') as sfile1, open(sent_file2,'r') as sfile2, open(pair_file,'r') as pfile:
-            if logLevel>=2: logMessages.append("讀取資料檔：{}".format(sent_file1))
+            if logLevel>=2: logMessages.append("[#TID:{}][#SentFILE-1]讀取資料檔：{}".format(trid,sent_file1))
             s1 = dict([ (line.strip().split("\t")) for line in sfile1])
 
-            if logLevel>=2: logMessages.append("讀取資料檔：{}".format(sent_file2))
+            if logLevel>=2: logMessages.append("[#TID:{}][#SentFILE-2]讀取資料檔：{}".format(trid,sent_file2))
             s2 = dict([ (line.strip().split("\t")) for line in sfile2])
             sent_dict  = {**s1, **s2}  # 合併s1, s2
 
@@ -96,16 +99,16 @@ def process_task_record(tr,config, logLevel=3):
             elif tr["data_type"] =="sc":
                 if "common_char_count_th" in config:
                     CCCTH = int(config["common_char_count_th"])
-                    if logLevel>=2: logMessages.append("啟用：common_char_count_th 設定：{}".format(CCCTH))
+                    if logLevel>=2: logMessages.append("[#TID:{}][#Info]啟用：common_char_count_th 設定：{}".format(trid,CCCTH))
                 else:
-                    if logLevel>=2: logMessages.append("找不到 common_char_count_th 設定，使用預設值：{}".format(CCCTH))
+                    if logLevel>=2: logMessages.append("[#TID:{}][#Info]找不到 common_char_count_th 設定，使用預設值：{}".format(trid,CCCTH))
                 
                 if logLevel>=3:
                     print(logMessages[-1])
 
                 r = [(sid1,sent_dict[sid1],sid2,sent_dict[sid2]) for sid1, sid2, ccc in plines if int(ccc)>=CCCTH]
             
-            if logLevel>=2: logMessages.append("共有{}筆 pair 資料".format(len(r)))
+            if logLevel>=2: logMessages.append("[#TID:{}][#Info]共有{}筆 pair 資料".format(trid,len(r)))
 
             if logLevel>=3:
                 print(logMessages[-1])
@@ -120,8 +123,8 @@ def process_task_record(tr,config, logLevel=3):
 
         with open(sent_file1,'r') as ifile1, open(sent_file2,'r') as ifile2:
             if logLevel>=2: 
-                logMessages.append("資料模式：兩全文檔比對")
-                logMessages.append("Reading Files：\n [1] {} \n [2] {}".format(sent_file1,sent_file2))
+                logMessages.append("[#TID:{}][#DataMode]資料模式：兩全文檔比對".format(trid))
+                logMessages.append("[#TID:{}][#PairFILE]Reading Files：\n [1] {} \n [2] {}".format(trid,sent_file1,sent_file2))
                 if logLevel>=3:
                     print("\n".join(logMessages[-2:]))
 
@@ -138,6 +141,9 @@ def process_task_record(tr,config, logLevel=3):
 #多共用Task 處理函式
 def processTask(taskobj):
     #print("開始進行Task:  {}/{}".format(i+1,len(tasks)))
+
+    trid = taskobj.task["task_id"] if "task_id" in taskobj.task else "Unknown"
+
     logLevel = taskobj.logLevel
     OUTPUT_filename,compareStringArray,logMessages= process_task_record(taskobj.task, taskobj.config,logLevel )
     print_to_file = True if OUTPUT_filename else False
@@ -158,7 +164,7 @@ def processTask(taskobj):
     t2= datetime.datetime.now()
 
     if logLevel>=2:
-        logMessages.append("\n執行完成，花費：{} 秒".format((t2-t1).seconds))
+        logMessages.append("[#TID:{}][#Info]執行完成，花費：{} 秒".format(trid,(t2-t1).seconds))
         if logLevel>=3:
             print(logMessages[-1])
 
@@ -167,7 +173,7 @@ def processTask(taskobj):
         outdir = os.path.dirname(OUTPUT_filename)
         Path(outdir).mkdir(parents=True, exist_ok=True)
         if logLevel>=2:
-            logMessages.append("結果輸出於：{}, 共{}筆".format(OUTPUT_filename,len(alignMessges)))
+            logMessages.append("[#TID:{}][#LogFILE]結果輸出於：{}, 共{}筆".format(trid,OUTPUT_filename,len(alignMessges)))
         
         with open(OUTPUT_filename,'w') as ofile:
             ofile.write("\r\n".join(alignMessges))
@@ -268,10 +274,11 @@ def unissw_dila_main():
             trid = tr["task_id"]
         else:
             trid = "Unknown"
+
         now = datetime.datetime.now()
         task_done +=1
         if logLevel >=1:
-            msgs.append("[#TaskDone]已完成：{}/{} (TaskID:{}, {}秒)".format(task_done,len(taskObjList),trid,(now-tx).seconds))
+            msgs.append("[#TaskDone][#TID:{}]已完成：{}/{} [Time:{}(秒)]".format(trid,task_done,len(taskObjList),(now-tx).seconds))
             print(msgs[-1])
 
             if logLevel >=2:
