@@ -72,7 +72,7 @@ I have move few impoartant setting out from my code. Now you can revise the conf
 ```
 All of them are optional, and above value equals the defualt values in the unissw program.
 
-log_message_level : 設定螢幕上與log檔案內的訊息層次，預計為 
+log_message_level : 設定螢幕上與log檔案內的訊息層次，可能值為： 
   - 0: 不顯示log, 
   - 1: 顯示並列印整體工作進度, 
   - 2: 顯示並列印整體工作進度+列印各卷比較細節。
