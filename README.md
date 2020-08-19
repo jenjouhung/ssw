@@ -65,7 +65,7 @@ I have move few impoartant setting out from my code. Now you can revise the conf
   "with_variant": "True"
   "variant_file": "data/variants.txt",
   "log_file": "batch-data/out/log.txt",
-  "log_message_level": 2,
+  "log_message_level": 3,
   "num_of_max_process": 1
   "common_char_count_th":-1
 }
