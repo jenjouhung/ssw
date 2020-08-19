@@ -155,7 +155,8 @@ def run_align_task(
 	pairs, config,				 			#資料序列 與比對設定
 	messageType,  						#列印訊息type
 	variantMode, variantfile, #異體字比對相關
-	print_to_file=False  ): 		#Debug訊息 是否列印出來 
+	print_to_file=False,  #Debug訊息 是否列印出來 
+	batch_mode = False): 		
 	
 	alignMessges= []
 	#準備檔頭
@@ -181,10 +182,10 @@ def run_align_task(
 	loop=0
 
 	# t0 = datetime.datetime.now()
-
+	print("\r開始比對...")
 	task_length=len(pairs)
 	while (len(pairs)):
-		if (loop%1000)==0:
+		if (not batch_mode) and (loop%1000 ==0):
 			# tms=(tnow-t0).microseconds
 			progress = loop/task_length*100
 			# speed = (tms)/(loop+1)

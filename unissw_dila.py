@@ -1,5 +1,5 @@
 from unissw import *
-
+from pathlib import Path
 import sys,getopt
 import os
 import json
@@ -136,7 +136,8 @@ def processTask(taskobj):
 
         #進行資料比較
         alignMessges= run_align_task(compareStringArray,taskobj.config,
-                                taskobj.messageType,taskobj.variantMode, taskobj.variantFile, print_to_file)
+                                taskobj.messageType,taskobj.variantMode, 
+                                taskobj.variantFile, print_to_file, batch_mode=True)
 
         t2= datetime.datetime.now()
 
@@ -144,6 +145,10 @@ def processTask(taskobj):
         print(logMessages[-1])
 
         if (OUTPUT_filename):
+            #確保有資料夾可以輸出
+            outdir = os.path.dirname(OUTPUT_filename)
+            Path(outdir).mkdir(parents=True, exist_ok=True)
+
             logMessages.append("結果輸出於：{}, 共{}筆".format(OUTPUT_filename,len(alignMessges)))
             with open(OUTPUT_filename,'w') as ofile:
                 ofile.write("\r\n".join(alignMessges))
