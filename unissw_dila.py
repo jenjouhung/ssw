@@ -172,16 +172,17 @@ def processTask(taskobj):
         #確保有資料夾可以輸出
         outdir = os.path.dirname(OUTPUT_filename)
         Path(outdir).mkdir(parents=True, exist_ok=True)
-        if logLevel>=2:
-            logMessages.append("[#TID:{}][#LogFILE]結果輸出於：{}, 共{}筆".format(trid,OUTPUT_filename,len(alignMessges)))
-        
-        with open(OUTPUT_filename,'w') as ofile:
-            ofile.write("\r\n".join(alignMessges))
-        
-        # if logLevel>=2:
-        #     logMessages.append("-"*60)
-        #     if logLevel>=3:
-        #         print("\n".join(logMessages[-2:]))
+        if len(alignMessges) > 1 : #輸出結果, 1筆是檔頭
+
+            if logLevel>=2:
+                logMessages.append("[#TID:{0}][#Output][#c:{2}]結果輸出於：{1}, 共{2}筆".format(trid,OUTPUT_filename,len(alignMessges)-1))
+            
+            with open(OUTPUT_filename,'w') as ofile:
+                ofile.write("\r\n".join(alignMessges))
+
+        else: #沒有結果, 不輸出
+            if logLevel>=2:
+                logMessages.append("[#TID:{}][#Output][#c:0]沒有比對結果，不輸出。".format(trid))
     
     
     return logMessages
@@ -270,15 +271,12 @@ def unissw_dila_main():
     for msgs in pool.imap(processTask,taskObjList):
         tr = taskObjList[task_done].task
 
-        if "task_id" in tr:
-            trid = tr["task_id"]
-        else:
-            trid = "Unknown"
+        trid = tr["task_id"] if "task_id" in tr else "Unknown"
 
         now = datetime.datetime.now()
         task_done +=1
         if logLevel >=1:
-            msgs.append("[#TaskDone][#TID:{}]已完成：{}/{} [Time:{}(秒)]".format(trid,task_done,len(taskObjList),(now-tx).seconds))
+            msgs.append("[#TID:{}][#TaskDone]已完成：{}/{} [Time:{}(秒)]".format(trid,task_done,len(taskObjList),(now-tx).seconds))
             print(msgs[-1])
 
             if logLevel >=2:
