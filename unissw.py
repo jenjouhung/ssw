@@ -10,6 +10,7 @@ MISMATCH_SCORE=-3
 VARMATCH_SCORE=2
 GAP_OPEN = -3
 GAP_EXTEND = -2
+MIN_COMP_LENGTH = 10 #最小比對長度，也是結果過濾門檻
 
 
 def align_init(allSymbols,variantTable=None,
@@ -174,6 +175,7 @@ def run_align_task(
 	misScore = int(config["mismacth_penalty"]) if ("mismacth_penalty" in config) else MISMATCH_SCORE
 	gapOpen = int(config["gap_open_penalty"]) if ("gap_open_penalty" in config) else GAP_OPEN
 	gapExtend = int(config["gap_extend_penalty"]) if ("gap_extend_penalty" in config) else GAP_EXTEND
+	mCL = int(config["common_char_count_th"]) if ("common_char_count_th" in config) else MIN_COMP_LENGTH
 
 	vt=None
 	if variantMode:
@@ -205,7 +207,7 @@ def run_align_task(
 		rMsg = align_strings(
 						refID,refString,qryID,qryString,
 						mScore,varScore,misScore,gapOpen,gapExtend,
-						messageType, variantTable=vt)
+						messageType, minCompLen=mCL, variantTable=vt)
 
 		t1 = datetime.datetime.now()
 

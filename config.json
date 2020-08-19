@@ -9,5 +9,5 @@
   "log_file": "batch-data/out/log.txt",
   "log_message_level": 2,
   "num_of_max_process": 1,
-  "common_char_count_th":12
+  "common_char_count_th":10
 }
