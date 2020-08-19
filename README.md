@@ -65,11 +65,21 @@ I have move few impoartant setting out from my code. Now you can revise the conf
   "with_variant": "True"
   "variant_file": "data/variants.txt",
   "log_file": "batch-data/out/log.txt",
+  "log_message_level": 2,
   "num_of_max_process": 1
   "common_char_count_th":-1
 }
 ```
 All of them are optional, and above value equals the defualt values in the unissw program.
+
+log_message_level : 設定螢幕上與log檔案內的訊息層次，預計為 
+  - 0: 不顯示log, 
+  - 1: 顯示並列印整體工作進度, 
+  - 2: 顯示並列印整體工作進度+列印各卷比較細節。
+  - 3: 顯示並列印整體工作進度+顯示並列印各卷比較細節
+(Batch Mode Only)
+
+common_char_count_th : 需搭配 config檔內，"data_type":sc 使用, 利用此值控制超過多少共用字的字串pair，需要進行 sw 比對。 (Batch Mode Only)
 
 
 ## Batch Mode
@@ -90,7 +100,7 @@ if you didn't specify by -c, the system will read config.json in package root by
 
 This library supports mutiprocess now, just set "num_of_max_process" in the config file.
 
-"threadhold_of_common_char_count" is used to decide whether two sentences will be included in ssw comparsion or not. The paramater works only with batch mode with datatype s+, otherwise the paramter will be ingored.
+"common_char_count_th" is used to decide whether two sentences will be included in ssw comparsion or not. The paramater works only with batch mode with datatype sc, otherwise the paramter will be ingored.
 
 
 ## task.json

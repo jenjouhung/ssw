@@ -152,10 +152,10 @@ def genreate_align_report(alignment, refID,crString,qryID,cqString,compareInterv
 	return msg
 
 def run_align_task(
-	pairs, config,				 			#資料序列 與比對設定
-	messageType,  						#列印訊息type
+	pairs, config,			  #資料序列 與比對設定
+	messageType,  			  #sw 訊息type
 	variantMode, variantfile, #異體字比對相關
-	print_to_file=False,  #Debug訊息 是否列印出來 
+	print_to_file=False,  #Debug訊息 是否至檔案中出來 
 	batch_mode = False): 		
 	
 	alignMessges= []
@@ -182,7 +182,6 @@ def run_align_task(
 	loop=0
 
 	# t0 = datetime.datetime.now()
-	print("\r開始比對...")
 	task_length=len(pairs)
 	while (len(pairs)):
 		if (not batch_mode) and (loop%1000 ==0):
@@ -284,9 +283,9 @@ def unissw_main():
 
 
 	if (print_to_file): 
-			msg = "開始執行比對："
-			print(msg)
-			logMessages.append(msg)
+		msg = "開始執行比對："
+		print(msg)
+		logMessages.append(msg)
 
 	if inputFormat == "fullText":
 		#開檔, reference & query
