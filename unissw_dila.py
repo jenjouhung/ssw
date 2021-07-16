@@ -19,6 +19,33 @@ class TaskObj():
 def usage():
 	print("usage: python3 unissw_dila.py  [-c config FILE] -t task FILE")
 
+def resolveSentRange(segsDict,idRange):
+    """
+        segsDict 區段字典, key:text
+        idRange id 區段，可能為x 或 x..y  ex: (10 or 11..13)
+    """
+    """
+        
+    """
+    if (".." in idRange):
+        s,e = idRange.split("..")
+        r=""
+        # print ("------")
+        # print("[{}]{}".format(s,segsDict[s]))
+        # print("[{}]{}".format(e,segsDict[e]))
+        # 考慮到最後一段才可能不滿...
+        r=segsDict[e] # 最後拿滿
+        for n in range(int(e)-1,int(s)-1,-1):
+            # print("n="+str(n))
+            L = len(segsDict[str(n)])/2
+            # print("Length={}".format(L))
+            r=segsDict[str(n)][:int(L)]+r #其他拿前半
+
+        return r
+    else:
+        # print ("------")
+        # print("[{}]{}".format(idRange,segsDict[idRange]))
+        return segsDict[idRange]
 
 def process_task_record(tr,config, logLevel=3):
     r =[]
@@ -85,9 +112,13 @@ def process_task_record(tr,config, logLevel=3):
             if logLevel>=2: logMessages.append("[#TID:{}][#SentFILE-1]讀取資料檔：{}".format(trid,sent_file1))
             s1 = dict([ (line.strip().split("\t")) for line in sfile1])
 
-            if logLevel>=2: logMessages.append("[#TID:{}][#SentFILE-2]讀取資料檔：{}".format(trid,sent_file2))
+            if logLevel>=2: 
+                logMessages.append("[#TID:{}][#SentFILE-2]讀取資料檔：{}".format(trid,sent_file2))
+                print("[#TID:{}][#SentFILE-2]讀取資料檔：{}".format(trid,sent_file2))
+            # for d in [ (line.strip().split("\t")) for line in sfile2]:
+            #     print ("d[0]={},d[1]={}".format(d[0],d[1]))
             s2 = dict([ (line.strip().split("\t")) for line in sfile2])
-            sent_dict  = {**s1, **s2}  # 合併s1, s2
+            # sent_dict  = {**s1, **s2}  # 合併s1, s2
 
             if logLevel>=3:
                 print("\n".join(logMessages[-2:]))
@@ -105,9 +136,39 @@ def process_task_record(tr,config, logLevel=3):
                 
                 if logLevel>=3:
                     print(logMessages[-1])
+                
+                # only for Debug 2021.07.16
+                # for sid1, sid2, ccc in plines:
+                #     if sid1=="103..104" or sid2=="103..104":
+                #         sent1=resolveSentRange(s1,sid1)
+                #         sent2=resolveSentRange(s2,sid2)
 
-                r = [(sid1,sent_dict[sid1],sid2,sent_dict[sid2]) for sid1, sid2, ccc in plines if int(ccc)>=CCCTH]
-            
+                #         print("******")
+                #         print("{}:{},{}:{}".format(sid1,sent1,sid2,sent2))
+                #         print("******")
+                # end of Debug
+
+                # 原設定
+                # r = [(sid1,sent_dict[sid1],sid2,sent_dict[sid2]) for sid1, sid2, ccc in plines if int(ccc)>=CCCTH]
+                
+                # 可處理RangeID
+                # r = [(sid1,resolveSentRange(s1,sid1),sid2,resolveSentRange(s2,sid2)) for sid1, sid2, ccc in plines if int(ccc)>=CCCTH]
+
+                # s1,s2 不合併 (Line 121 不執行)
+                r = [(sid1,s1[sid1],sid2,s2[sid2]) for sid1, sid2, ccc in plines if int(ccc)>=CCCTH]
+                # r=[]
+                # for sid1, sid2, ccc in plines:
+                #     if int(ccc)>=CCCTH:
+                #         try:
+                #             r.append((sid1,s1[sid1],sid2,s2[sid2]))
+                #         except KeyError:
+                #             if not(sid1 in s1):
+                #                 print("KeyError： {}在{}中找不到".format(sid1,sent_file1))
+                #             else:
+                #                 print("KeyError： {}在{}中找不到".format(sid2,sent_file2))                                
+                #             exit(0)
+
+
             if logLevel>=2: logMessages.append("[#TID:{}][#Info]共有{}筆 pair 資料".format(trid,len(r)))
 
             if logLevel>=3:
