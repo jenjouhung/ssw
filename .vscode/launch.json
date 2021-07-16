@@ -36,7 +36,7 @@
             "type": "python",
             "request": "launch",
             "stopOnEntry": true,
-            "pythonPath": "/usr/bin/python3",
+            "python": "/usr/bin/python3",
             "program": "${workspaceRoot}/unissw.py",
             "args": ["-pv","data/pair1.tsv"],
             "cwd": "",
