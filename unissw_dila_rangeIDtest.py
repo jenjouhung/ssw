@@ -169,8 +169,6 @@ def process_task_record(tr, config, logLevel=3):
         raise SystemExit("Error: 1X unsupported data type:{}. \n Occucrs in{}".format(
             tr["data_type"], tr))
 
-    raise SystemExit()  # 結束process
-
     return output_file, r, logMessages
 
 
@@ -186,7 +184,7 @@ def processTask(taskobj):
     print_to_file = True if OUTPUT_filename else False
 
     if len(compareStringArray) == 0:
-        return
+        return logMessages
 
     # if (print_to_file):
     #     print("開始執行比對：")
